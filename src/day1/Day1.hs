@@ -1,5 +1,6 @@
 module Day1 (solve) where
-import           Data.List (sort)
+import           Data.List       (sort)
+import           Data.List.Utils (split)
 
 solve :: String -> (Integer, Integer)
 solve input = (part1, part2)
@@ -18,15 +19,4 @@ maxCalories n xs = sum $ take n $ reverse $ sort $ map sum xs
 type Inventory = [Integer]
 
 getInventories :: String -> [Inventory]
-getInventories input = map stringsToInts stringInvs
-  where
-    stringInvs = splitInventories $ lines input
-
-splitInventories :: [String] -> [[String]]
-splitInventories [] = []
-splitInventories xs = inv : splitInventories (drop 1 xs')
-  where
-    (inv, xs') = span (/= "") xs
-
-stringsToInts :: [String] -> [Integer]
-stringsToInts = map read
+getInventories input = map (map read) (split [""] (lines input))

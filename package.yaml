@@ -37,6 +37,7 @@ ghc-options:
 library:
   source-dirs:
     - src/day1
+    - src/day2
 
 executables:
   aoc22-haskell-exe:

@@ -24,6 +24,7 @@ dependencies:
   - MissingH
   - unordered-containers
   - ghc
+  - criterion
 
 ghc-options:
   - -Wall
@@ -41,6 +42,7 @@ library:
     - src/day1
     - src/day2
     - src/day3
+    - src/day4
 
 executables:
   aoc22-haskell-exe:

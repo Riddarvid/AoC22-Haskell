@@ -1,6 +1,6 @@
 module Day4 (solve) where
 
-import           Data.List.Utils (split)
+import           StringUtils (getInts)
 
 solve :: String -> (Integer, Integer)
 solve input = (part1, part2)
@@ -38,11 +38,6 @@ parsePairs :: String -> [Pair]
 parsePairs input = map parsePair $ lines input
 
 parsePair :: String -> Pair
-parsePair str = case split "," str of
-  [a, b] -> (parseRange a, parseRange b)
-  _      -> error "Invalid pair string"
-
-parseRange :: String -> Range
-parseRange str = case split "-" str of
-  [a, b] -> (read a, read b)
-  _      -> error "Invalid range string"
+parsePair str = case getInts str of
+  [low1, high1, low2, high2] -> ((low1, high1), (low2, high2))
+  _                          -> error "Parse error"

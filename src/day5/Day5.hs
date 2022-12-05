@@ -51,10 +51,7 @@ move9001 n fromStack toStack = (drop n fromStack, take n fromStack ++ toStack)
 -- Common
 
 executeMoves :: Stacks -> [Instruction] -> (Int -> [Char] -> [Char] -> ([Char], [Char])) -> Stacks
-executeMoves stack [] _ = stack
-executeMoves stack (instr:instrs) moveFun = executeMoves stack' instrs moveFun
-  where
-    stack' = executeMove stack instr moveFun
+executeMoves stack instrs moveFun = foldl (\stack' instr -> executeMove stack' instr moveFun) stack instrs
 
 executeMove :: Stacks -> Instruction -> (Int -> [Char] -> [Char] -> ([Char], [Char])) -> Stacks
 executeMove stacks (Move n from to) moveFun = IntMap.insert to toStack' (IntMap.insert from fromStack' stacks)

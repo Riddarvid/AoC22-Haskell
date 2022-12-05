@@ -25,23 +25,29 @@ source-repository head
 
 library
   exposed-modules:
+      StringUtils
       Day1
       Day2
       Day3
       Day4
+      Day5
   other-modules:
       Paths_aoc22_haskell
   hs-source-dirs:
+      src
       src/day1
       src/day2
       src/day3
       src/day4
+      src/day5
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       MissingH
     , base >=4.7 && <5
-    , criterion
+    , containers
+    , extra
     , ghc
+    , regex-pcre
     , unordered-containers
   default-language: Haskell2010
 
@@ -56,8 +62,10 @@ executable aoc22-haskell-exe
       MissingH
     , aoc22-haskell
     , base >=4.7 && <5
-    , criterion
+    , containers
+    , extra
     , ghc
+    , regex-pcre
     , unordered-containers
   default-language: Haskell2010
 
@@ -73,7 +81,9 @@ test-suite aoc22-haskell-test
       MissingH
     , aoc22-haskell
     , base >=4.7 && <5
-    , criterion
+    , containers
+    , extra
     , ghc
+    , regex-pcre
     , unordered-containers
   default-language: Haskell2010

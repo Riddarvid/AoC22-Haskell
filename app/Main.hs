@@ -1,10 +1,10 @@
 module Main (main) where
 
-import           Day4 (solve)
+import           Day5 (solve)
 
 main :: IO ()
 main = do
-  input <- readFile "app/input/input4.txt"
+  input <- readFile "app/input/input5.txt"
   let (part1, part2) = solve input
   putStrLn "Part1:"
   print part1

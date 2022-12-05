@@ -24,7 +24,9 @@ dependencies:
   - MissingH
   - unordered-containers
   - ghc
-  - criterion
+  - regex-pcre
+  - extra
+  - containers
 
 ghc-options:
   - -Wall
@@ -39,10 +41,12 @@ ghc-options:
 
 library:
   source-dirs:
+    - src
     - src/day1
     - src/day2
     - src/day3
     - src/day4
+    - src/day5
 
 executables:
   aoc22-haskell-exe:

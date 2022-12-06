@@ -1,9 +1,10 @@
 module Day1 (solve) where
 import           Data.List       (sort)
 import           Data.List.Utils (split)
+import           Solution
 
-solve :: String -> (Integer, Integer)
-solve input = (part1, part2)
+solve :: String -> (Solution, Solution)
+solve input = (I part1, I part2)
   where
     invs = getInventories input
     part1 = maxCalories 1 invs

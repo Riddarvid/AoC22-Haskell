@@ -5,10 +5,11 @@ import           Data.IntMap     (IntMap, (!))
 import qualified Data.IntMap     as IntMap
 import           Data.List       (transpose)
 import           Data.List.Extra (trimStart)
+import           Solution        (Solution (S))
 import           StringUtils     (getInts)
 
-solve :: String -> (String, String)
-solve input = (part1, part2)
+solve :: String -> (Solution, Solution)
+solve input = (S part1, S part2)
   where
     (stacks, moves) = parseInput input
     part1 = topCrates $ executeMoves stacks moves move9000

@@ -2,9 +2,10 @@ module Day3 (solve) where
 import qualified Data.HashSet   as HS
 import           Data.Maybe     (fromJust)
 import           GHC.Utils.Misc (chunkList)
+import           Solution       (Solution (I))
 
-solve :: String -> (Integer, Integer)
-solve input = (part1, part2)
+solve :: String -> (Solution, Solution)
+solve input = (I part1, I part2)
   where
     rucksacks = lines input
     part1 = errPrio rucksacks

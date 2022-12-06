@@ -1,9 +1,10 @@
 module Day4 (solve) where
 
+import           Solution    (Solution (I))
 import           StringUtils (getInts)
 
-solve :: String -> (Integer, Integer)
-solve input = (part1, part2)
+solve :: String -> (Solution, Solution)
+solve input = (I part1, I part2)
   where
     pairs = parsePairs input
     part1 = totalContained pairs

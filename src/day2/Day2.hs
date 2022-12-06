@@ -1,9 +1,10 @@
 module Day2 (solve) where
 import           Data.Foldable (find)
 import           Data.Maybe
+import           Solution
 
-solve :: String -> (Integer, Integer)
-solve input = (part1, part2)
+solve :: String -> (Solution, Solution)
+solve input = (I part1, I part2)
   where
     part1 = totalScore $ parseStrats parseStrategy1 input
     part2 = totalScore $ parseStrats parseStrategy2 input

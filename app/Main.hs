@@ -15,13 +15,11 @@ day = 7
 main :: IO ()
 main = do
   input <- readFile ("app/input/input" ++ show day ++ ".txt")
-  --let solution = (solvers !! (day - 1)) input
-  --printSolution solution
-  let solution = D7.solve input
-  print solution
+  let solution = (solvers !! (day - 1)) input
+  printSolution solution
 
 solvers :: [String -> (Solution, Solution)]
-solvers = [D1.solve, D2.solve, D3.solve, D4.solve, D5.solve, D6.solve]
+solvers = [D1.solve, D2.solve, D3.solve, D4.solve, D5.solve, D6.solve, D7.solve]
 
 printSolution :: (Show a, Show b) => (a, b) -> IO ()
 printSolution (part1, part2) = do

@@ -1,9 +1,7 @@
 module Day7 (solve) where
-import           Control.Monad.State.Lazy
-import           Data.HashMap.Lazy        (HashMap, (!))
-import qualified Data.HashMap.Lazy        as HM
-import           Debug.Trace              (trace)
-import           Solution                 (Solution)
+import           Data.HashMap.Lazy (HashMap, (!))
+import qualified Data.HashMap.Lazy as HM
+import           Solution          (Solution (I))
 
 data Instruction = ILs [FileDesc] | ICd String
   deriving (Show)
@@ -16,11 +14,13 @@ type Dir = (HashMap String FileDir)
 data FileDir = Dir Dir | File Integer
   deriving (Show)
 
-solve :: String -> Dir
-solve input = root
+solve :: String -> (Solution, Solution)
+solve input = (I part1, I part2)
   where
     inputInstrs = parseInstrs input
     root = parseRoot inputInstrs
+    part1 = sumBelowLimit root 100000
+    part2 = smallestAbove root $ neededSpace root
 
 -- Parse instructions
 
@@ -87,3 +87,33 @@ newDir descs = HM.fromList $ map descToMap descs
 descToMap :: FileDesc -> (String, FileDir)
 descToMap (FDir name)       = (name, Dir HM.empty)
 descToMap (FFile name size) = (name, File size)
+
+-- Part 1
+
+sumBelowLimit :: Dir -> Integer -> Integer
+sumBelowLimit dir n = sum $ filter (<= n) $ dirSizes (Dir dir)
+
+-- Part 2
+
+neededSpace :: Dir -> Integer
+neededSpace dir = 30000000 - freeSpace
+  where
+    usedSpace = totalSize (Dir dir)
+    freeSpace = 70000000 - usedSpace
+
+smallestAbove :: Dir -> Integer -> Integer
+smallestAbove dir n = minimum $ filter (>= n) $ dirSizes (Dir dir)
+
+-- General
+
+dirSizes :: FileDir -> [Integer]
+dirSizes (File _) = []
+dirSizes fileDir@(Dir dir) = dirSize : subDirSizes
+  where
+    dirSize = totalSize fileDir
+    subDirs = HM.elems dir
+    subDirSizes = foldr (\subDir ls -> dirSizes subDir ++ ls) [] subDirs
+
+totalSize :: FileDir -> Integer
+totalSize (File size) = size
+totalSize (Dir dir)   = HM.foldr (\fileDir n -> totalSize fileDir + n) 0 dir

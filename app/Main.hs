@@ -18,7 +18,7 @@ main = do
   --let solution = (solvers !! (day - 1)) input
   --printSolution solution
   let solution = D7.solve input
-  mapM_ print solution
+  print solution
 
 solvers :: [String -> (Solution, Solution)]
 solvers = [D1.solve, D2.solve, D3.solve, D4.solve, D5.solve, D6.solve]

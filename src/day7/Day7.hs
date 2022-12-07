@@ -1,45 +1,89 @@
 module Day7 (solve) where
-import           Data.HashMap.Lazy (HashMap)
-import qualified Data.HashMap.Lazy as HM
-import           Solution          (Solution)
+import           Control.Monad.State.Lazy
+import           Data.HashMap.Lazy        (HashMap, (!))
+import qualified Data.HashMap.Lazy        as HM
+import           Debug.Trace              (trace)
+import           Solution                 (Solution)
 
-data Instruction = ILs | ICd String | IDir String | IFile String Integer
+data Instruction = ILs [FileDesc] | ICd String
   deriving (Show)
 
-data Dir = Root (HashMap String FileDir) | NotRoot Dir (HashMap String FileDir)
+data FileDesc = FDir String | FFile String Integer
+  deriving (Show)
+
+type Dir = (HashMap String FileDir)
 
 data FileDir = Dir Dir | File Integer
+  deriving (Show)
 
-solve :: String -> [Instruction]
-solve input = instrs
+solve :: String -> Dir
+solve input = root
   where
-    instrs = parseInstrs input
+    inputInstrs = parseInstrs input
+    root = parseRoot inputInstrs
+
+-- Parse instructions
 
 parseInstrs :: String -> [Instruction]
-parseInstrs input = map parseInstr $ lines input
+parseInstrs input = parseInstrs' $ lines input
 
-parseInstr :: String -> Instruction
-parseInstr line
-  | head (words line) == "$" = parseCommandInstr $ tail $ words line
-  | otherwise = parseFileDirInstr $ words line
-
-parseCommandInstr :: [String] -> Instruction
-parseCommandInstr line
-  | head line == "cd" = ICd (line !! 1)
-  | otherwise = ILs
-
-parseFileDirInstr :: [String] -> Instruction
-parseFileDirInstr line
-  | head line == "dir" = IDir (line !! 1)
-  | otherwise = IFile (line !! 1) (read (head line))
-
-{-
-parseInput :: String -> Dir
-parseInput input = parseCommands (lines input) (Root HM.empty)
-
-parseCommands :: [String] -> Dir -> Dir
-parseCommands [] dir         = dir
-parseCommands (cmd:cmds) dir = parseCommands cmds' dir'
+parseInstrs' :: [String] -> [Instruction]
+parseInstrs' [] = []
+parseInstrs' (x:xs) = instr : parseInstrs' xs'
   where
-    (dir', cmds') = parseCommand cmd cmds dir
--}
+    (instr, xs') = parseInstr x xs
+
+parseInstr :: String -> [String] -> (Instruction, [String])
+parseInstr line xs
+  | tokens !! 1 == "cd" = (ICd (tokens !! 2), xs)
+  | otherwise = parseLs xs
+  where
+    tokens = words line
+
+parseLs :: [String] -> (Instruction, [String])
+parseLs xs = (ILs (map parseFileDesc fileDirs), drop (length fileDirs) xs)
+  where
+    fileDirs = takeWhile (\s -> head s /= '$') xs
+
+parseFileDesc :: String -> FileDesc
+parseFileDesc line
+  | head tokens == "dir" = FDir (tokens !! 1)
+  | otherwise = FFile (tokens !! 1) (read (head tokens))
+  where
+    tokens = words line
+
+-- Parse file tree
+
+parseRoot :: [Instruction] -> Dir
+parseRoot instrs = parseRoot' instrs [] HM.empty
+
+parseRoot' :: [Instruction] -> [String] -> Dir -> Dir
+--parseRoot' instrs path dir | trace ("Remaining instrs: " ++ show instrs ++ "\nCurrent path: " ++ show path ++ "\nCurrent tree: " ++ show dir ++ "\n") False = undefined
+parseRoot' [] _ dir = dir
+parseRoot' (ICd dest:instrs) path dir = parseRoot' instrs path' dir
+  where
+    path' = case dest of
+      "/"   -> []
+      ".."  -> tail path
+      dest' -> dest' : path
+parseRoot' (ILs files:instrs) path dir = parseRoot' instrs path dir'
+  where
+    dir' = insertByPath path (newDir files) dir
+
+insertByPath :: [String] -> Dir -> Dir -> Dir
+insertByPath path = insertByPath' (reverse path)
+
+insertByPath' :: [String] -> Dir -> Dir -> Dir
+insertByPath' [] toInsert _ = toInsert
+insertByPath' (name:path) toInsert dir = HM.insert name (Dir updated) dir
+  where
+    updated = case dir ! name of
+      (File _)   -> error "Can't cd into file"
+      (Dir dir') -> insertByPath' path toInsert dir'
+
+newDir :: [FileDesc] -> Dir
+newDir descs = HM.fromList $ map descToMap descs
+
+descToMap :: FileDesc -> (String, FileDir)
+descToMap (FDir name)       = (name, Dir HM.empty)
+descToMap (FFile name size) = (name, File size)

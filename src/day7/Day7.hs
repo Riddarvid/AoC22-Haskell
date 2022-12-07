@@ -12,8 +12,9 @@ solve :: String -> (Solution, Solution)
 solve input = (I part1, I part2)
   where
     root = parseRoot $ lines input
-    part1 = sumBelowLimit root 100000
-    part2 = smallestAbove root $ neededSpace root
+    (usedSpace, dirSizes) = fileDirSize $ Dir root
+    part1 = sumBelowLimit dirSizes 100000
+    part2 = smallestAbove dirSizes $ neededSpace usedSpace
 
 -- Parse file tree
 
@@ -62,30 +63,26 @@ insertByPath' (name:path) toInsert dir = HM.insert name (Dir updated) dir
 
 -- Part 1
 
-sumBelowLimit :: Dir -> Integer -> Integer
-sumBelowLimit dir n = sum $ filter (<= n) $ dirSizes (Dir dir)
+sumBelowLimit :: [Integer] -> Integer -> Integer
+sumBelowLimit dirSizes n = sum $ filter (<= n) dirSizes
 
 -- Part 2
 
-neededSpace :: Dir -> Integer
-neededSpace dir = 30000000 - freeSpace
+neededSpace :: Integer -> Integer
+neededSpace usedSpace = 30000000 - freeSpace
   where
-    usedSpace = totalSize (Dir dir)
     freeSpace = 70000000 - usedSpace
 
-smallestAbove :: Dir -> Integer -> Integer
-smallestAbove dir n = minimum $ filter (>= n) $ dirSizes (Dir dir)
+smallestAbove :: [Integer] -> Integer -> Integer
+smallestAbove dirSizes n = minimum $ filter (>= n) dirSizes
 
 -- General
 
-dirSizes :: FileDir -> [Integer]
-dirSizes (File _) = []
-dirSizes fileDir@(Dir dir) = dirSize : subDirSizes
+-- The first element of the tuple is the total size of the object, the second is the size of all subdirs
+fileDirSize :: FileDir -> (Integer, [Integer])
+fileDirSize (File size) = (size, [])
+fileDirSize (Dir dir) = (dirSize, dirSize : subDirSizes)
   where
-    dirSize = totalSize fileDir
-    subDirs = HM.elems dir
-    subDirSizes = foldr (\subDir ls -> dirSizes subDir ++ ls) [] subDirs
-
-totalSize :: FileDir -> Integer
-totalSize (File size) = size
-totalSize (Dir dir)   = HM.foldr (\fileDir n -> totalSize fileDir + n) 0 dir
+    subFileDirs = HM.elems dir
+    dirSize = foldr (\fileDir n -> n + fst (fileDirSize fileDir)) 0 subFileDirs
+    subDirSizes = foldr (\fileDir xs -> snd (fileDirSize fileDir) ++ xs) [] subFileDirs

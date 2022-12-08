@@ -7,10 +7,11 @@ import qualified Day4     as D4
 import qualified Day5     as D5
 import qualified Day6     as D6
 import qualified Day7     as D7
+import qualified Day8     as D8
 import           Solution
 
 day :: Int
-day = 7
+day = 8
 
 main :: IO ()
 main = do
@@ -19,7 +20,7 @@ main = do
   printSolution solution
 
 solvers :: [String -> (Solution, Solution)]
-solvers = [D1.solve, D2.solve, D3.solve, D4.solve, D5.solve, D6.solve, D7.solve]
+solvers = [D1.solve, D2.solve, D3.solve, D4.solve, D5.solve, D6.solve, D7.solve, D8.solve]
 
 printSolution :: (Show a, Show b) => (a, b) -> IO ()
 printSolution (part1, part2) = do

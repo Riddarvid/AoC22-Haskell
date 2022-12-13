@@ -1,12 +1,11 @@
 {-# LANGUAGE InstanceSigs #-}
 module Day11 (solve) where
-import           Control.Monad.State (State, execState, get, modify, put)
+import           Control.Monad.State (State, execState, get, put)
 import           Data.IntMap         (IntMap, (!))
 import qualified Data.IntMap         as IM
 import           Data.List           (sort)
 import           Data.List.Utils     (split)
-import           Debug.Trace         (trace)
-import           Solution            (Solution (I, S))
+import           Solution            (Solution (I))
 import           StringUtils         (getInts)
 
 solve :: String -> (Solution, Solution)

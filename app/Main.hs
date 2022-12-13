@@ -2,7 +2,8 @@ module Main (main) where
 
 import qualified Day1     as D1
 import qualified Day10    as D10
-import qualified Day11 as D11
+import qualified Day11    as D11
+import qualified Day12    as D12
 import qualified Day2     as D2
 import qualified Day3     as D3
 import qualified Day4     as D4
@@ -11,10 +12,11 @@ import qualified Day6     as D6
 import qualified Day7     as D7
 import qualified Day8     as D8
 import qualified Day9     as D9
+
 import           Solution (Solution)
 
 day :: Int
-day = 11
+day = 12
 
 main :: IO ()
 main = do
@@ -23,7 +25,7 @@ main = do
   printSolution solution
 
 solvers :: [String -> (Solution, Solution)]
-solvers = [D1.solve, D2.solve, D3.solve, D4.solve, D5.solve, D6.solve, D7.solve, D8.solve, D9.solve, D10.solve, D11.solve]
+solvers = [D1.solve, D2.solve, D3.solve, D4.solve, D5.solve, D6.solve, D7.solve, D8.solve, D9.solve, D10.solve, D11.solve, D12.solve]
 
 printSolution :: (Show a, Show b) => (a, b) -> IO ()
 printSolution (part1, part2) = do

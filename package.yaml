@@ -28,6 +28,7 @@ dependencies:
   - extra
   - containers
   - mtl
+  - pqueue
 
 ghc-options:
   - -Wall
@@ -54,6 +55,7 @@ library:
     - src/day9
     - src/day10
     - src/day11
+    - src/day12
 
 executables:
   aoc22-haskell-exe:

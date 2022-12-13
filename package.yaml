@@ -53,6 +53,7 @@ library:
     - src/day8
     - src/day9
     - src/day10
+    - src/day11
 
 executables:
   aoc22-haskell-exe:

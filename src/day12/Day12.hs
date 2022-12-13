@@ -13,10 +13,10 @@ solve input = (I part1, I part2)
     charMap = stringsToCharMap $ lines input
     startPos = findPosition 'S' charMap
     goalPos = findPosition 'E' charMap
-    adjacency = adjacencyTable charMap
-    part1 = toInteger $ length $ fromJust $ shortestPathBFS startPos goalPos adjacency
+    adjacencyFun node = adjacencyTable charMap ! node
+    part1 = toInteger $ length $ fromJust $ shortestPathBFS startPos goalPos adjacencyFun
     startPos' = findPositions 'a' charMap
-    part2 = toInteger $ length $ fromJust $ shortestPathBFS' startPos' goalPos adjacency
+    part2 = toInteger $ length $ fromJust $ shortestPathBFS' startPos' goalPos adjacencyFun
 
 type Pos = (Int, Int)
 

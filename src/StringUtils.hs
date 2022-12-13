@@ -12,8 +12,10 @@ getInts input = map read $ getAllTextMatches $ input =~ intRegex
 
 type Pos = (Int, Int)
 
-stringsToCharMap :: [String] -> HashMap Pos Char
-stringsToCharMap input = HM.fromList mapList
+stringsToCharMap :: [String] -> (HashMap Pos Char, Int, Int)
+stringsToCharMap input = (HM.fromList mapList, maxX, maxY)
   where
     charList = concat input
-    mapList = zip [(x, y) | y <- [0 .. length input - 1], x <- [0 .. length (head input) - 1]] charList
+    maxY = length input - 1
+    maxX = length (head input) - 1
+    mapList = zip [(x, y) | y <- [0 .. maxY], x <- [0 .. maxX]] charList

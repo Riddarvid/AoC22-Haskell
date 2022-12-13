@@ -10,7 +10,7 @@ import           StringUtils       (stringsToCharMap)
 solve :: String -> (Solution, Solution)
 solve input = (I part1, I part2)
   where
-    charMap = stringsToCharMap $ lines input
+    (charMap, maxX, maxY) = stringsToCharMap $ lines input
     startPos = findPosition 'S' charMap
     goalPos = findPosition 'E' charMap
     adjacencyFun node = adjacencyTable charMap ! node
@@ -44,3 +44,6 @@ neighborsInMap pos adjacencies = filter (`HM.member` adjacencies) (neighbors pos
 
 neighbors :: Pos -> [Pos]
 neighbors (x, y) = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+
+-- Print path
+

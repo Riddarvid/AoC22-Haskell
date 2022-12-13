@@ -2,21 +2,26 @@ module Day12 (solve) where
 import           Data.Char         (ord)
 import           Data.HashMap.Lazy (HashMap, (!))
 import qualified Data.HashMap.Lazy as HM
+import           Data.HashSet      (HashSet)
+import qualified Data.HashSet      as HS
 import           Data.Maybe        (fromJust)
-import           Graphs            (shortestPathBFS, shortestPathBFS')
-import           Solution          (Solution (I))
+import           Graphs            (Path, nodesFromPath, shortestPathBFS,
+                                    shortestPathBFS')
+import           Solution          (Solution (I, S))
 import           StringUtils       (stringsToCharMap)
 
 solve :: String -> (Solution, Solution)
-solve input = (I part1, I part2)
+solve input = (S (showPath charMap path1 maxX maxY ++ "\n\n" ++ show part1), S (showPath charMap path2 maxX maxY ++ "\n\n" ++ show part2))
   where
     (charMap, maxX, maxY) = stringsToCharMap $ lines input
     startPos = findPosition 'S' charMap
     goalPos = findPosition 'E' charMap
     adjacencyFun node = adjacencyTable charMap ! node
-    part1 = toInteger $ length $ fromJust $ shortestPathBFS startPos goalPos adjacencyFun
+    path1 = fromJust $ shortestPathBFS startPos goalPos adjacencyFun
+    part1 = toInteger $ length path1
     startPos' = findPositions 'a' charMap
-    part2 = toInteger $ length $ fromJust $ shortestPathBFS' startPos' goalPos adjacencyFun
+    path2 = fromJust $ shortestPathBFS' startPos' goalPos adjacencyFun
+    part2 = toInteger $ length path2
 
 type Pos = (Int, Int)
 
@@ -47,3 +52,24 @@ neighbors (x, y) = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
 
 -- Print path
 
+red :: String
+red = "\ESC[31m"
+
+reset :: String
+reset = "\ESC[0m"
+
+showRed :: Char -> String
+showRed c = red ++ [c] ++ reset
+
+showPath :: HashMap Pos Char -> Path Pos -> Int -> Int -> String
+showPath charMap path maxX maxY = unlines $ [showLine charMap (nodesFromPath path) maxX y | y <- [0 .. maxY]]
+
+showLine :: HashMap Pos Char -> HashSet Pos -> Int -> Int -> String
+showLine charMap path maxX y = foldr (\pos str -> showPos charMap path pos ++ str) "" ([(x, y) | x <- [0 .. maxX]])
+
+showPos :: HashMap Pos Char -> HashSet Pos -> Pos -> String
+showPos charMap path pos
+  | pos `HS.member` path = showRed c
+  | otherwise = [c]
+  where
+    c = charMap ! pos

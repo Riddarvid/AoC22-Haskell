@@ -1,9 +1,11 @@
 {-# LANGUAGE InstanceSigs #-}
-module Graphs (shortestPathBFS, shortestPathBFS', Edge, Path) where
+module Graphs (shortestPathBFS, shortestPathBFS', nodesFromPath, Edge, Path) where
 
 import           Data.Hashable     (Hashable)
 import           Data.HashMap.Lazy (HashMap, (!))
 import qualified Data.HashMap.Lazy as HM
+import           Data.HashSet      (HashSet)
+import qualified Data.HashSet      as HS
 
 data Pre a = Pre a | End
 
@@ -43,3 +45,6 @@ buildPath :: (Eq a, Hashable a) => HashMap a (Pre a) -> a -> Path a
 buildPath preMap current = case preMap ! current of
   End     -> []
   Pre pre -> Edge (pre, current) : buildPath preMap pre
+
+nodesFromPath :: (Eq a, Hashable a) => Path a -> HashSet a
+nodesFromPath = foldr (\(Edge (from, to)) nodes -> HS.insert from (HS.insert to nodes)) HS.empty

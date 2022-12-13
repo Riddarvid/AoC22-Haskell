@@ -17,7 +17,7 @@ import qualified Day9     as D9
 import           Solution (Solution)
 
 day :: Int
-day = 13
+day = 12
 
 main :: IO ()
 main = do

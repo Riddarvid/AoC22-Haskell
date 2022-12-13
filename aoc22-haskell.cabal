@@ -25,6 +25,7 @@ source-repository head
 
 library
   exposed-modules:
+      Graphs
       Solution
       StringUtils
       Day1
@@ -62,8 +63,8 @@ library
     , containers
     , extra
     , ghc
+    , hashable
     , mtl
-    , pqueue
     , regex-pcre
     , unordered-containers
   default-language: Haskell2010
@@ -82,8 +83,8 @@ executable aoc22-haskell-exe
     , containers
     , extra
     , ghc
+    , hashable
     , mtl
-    , pqueue
     , regex-pcre
     , unordered-containers
   default-language: Haskell2010
@@ -103,8 +104,8 @@ test-suite aoc22-haskell-test
     , containers
     , extra
     , ghc
+    , hashable
     , mtl
-    , pqueue
     , regex-pcre
     , unordered-containers
   default-language: Haskell2010

@@ -28,7 +28,7 @@ dependencies:
   - extra
   - containers
   - mtl
-  - pqueue
+  - hashable
 
 ghc-options:
   - -Wall

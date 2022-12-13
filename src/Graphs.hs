@@ -1,5 +1,5 @@
 {-# LANGUAGE InstanceSigs #-}
-module Graphs (shortestPathBFS, Edge, Path) where
+module Graphs (shortestPathBFS, shortestPathBFS', Edge, Path) where
 
 import           Data.Hashable     (Hashable)
 import           Data.HashMap.Lazy (HashMap, (!))
@@ -16,14 +16,19 @@ instance (Show a) => Show (Edge a) where
   show (Edge (from, to)) = show from ++ " -> " ++ show to
 
 shortestPathBFS :: (Eq a, Hashable a) => a -> a -> HashMap a [a] -> Maybe (Path a)
-shortestPathBFS start goal adjacency = shortestPathBFS' (HM.singleton start End) (HM.singleton start End) adjacency goal
+shortestPathBFS start = shortestPathBFS' [start]
 
-shortestPathBFS' :: (Eq a, Hashable a) => HashMap a (Pre a) -> HashMap a (Pre a) -> HashMap a [a] -> a -> Maybe (Path a)
-shortestPathBFS' lastLayer visited adjacency goal
+shortestPathBFS' :: (Eq a, Hashable a) => [a] -> a -> HashMap a [a] -> Maybe (Path a)
+shortestPathBFS' startNodes goal adjacency = shortestPathBFSInternal startNodes' startNodes' adjacency goal
+  where
+    startNodes' = HM.fromList [(start, End) | start <- startNodes]
+
+shortestPathBFSInternal :: (Eq a, Hashable a) => HashMap a (Pre a) -> HashMap a (Pre a) -> HashMap a [a] -> a -> Maybe (Path a)
+shortestPathBFSInternal lastLayer visited adjacency goal
   | goal `HM.member` lastLayer = Just $ buildPath visited goal
   | otherwise = if HM.null lastLayer'
     then Nothing
-    else shortestPathBFS' lastLayer' visited' adjacency goal
+    else shortestPathBFSInternal lastLayer' visited' adjacency goal
   where
     lastLayer' = nextLayer lastLayer visited adjacency
     visited' = HM.union lastLayer' visited

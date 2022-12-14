@@ -1,4 +1,4 @@
-module StringUtils (getInts, stringsToCharMap) where
+module StringUtils (getInts, getIntegers, stringsToCharMap) where
 
 import           Data.HashMap.Lazy (HashMap)
 import qualified Data.HashMap.Lazy as HM
@@ -7,8 +7,11 @@ import           Text.Regex.PCRE   (AllTextMatches (getAllTextMatches), (=~))
 intRegex :: String
 intRegex = "\\d+"
 
-getInts :: String -> [Integer]
+getInts :: String -> [Int]
 getInts input = map read $ getAllTextMatches $ input =~ intRegex
+
+getIntegers :: String -> [Integer]
+getIntegers input = map read $ getAllTextMatches $ input =~ intRegex
 
 type Pos = (Int, Int)
 

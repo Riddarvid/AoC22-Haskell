@@ -6,7 +6,7 @@ import qualified Data.IntMap         as IM
 import           Data.List           (sort)
 import           Data.List.Utils     (split)
 import           Solution            (Solution (I))
-import           StringUtils         (getInts)
+import           StringUtils         (getIntegers, getInts)
 
 solve :: String -> (Solution, Solution)
 solve input = (I part1, I part2)
@@ -47,13 +47,13 @@ parseInput input = IM.fromDistinctAscList $ zip [0 ..] $ map parseMonkey $ split
 parseMonkey :: [String] -> Monkey
 --parseMonkey input | trace (show input) False = undefined
 parseMonkey [idStr, itemsStr, opStr, testStr, trueStr, falseStr] = Monkey {
-  monkeyId = fromInteger $ head $ getInts idStr,
-  items = reverse $ getInts itemsStr,
+  monkeyId = head $ getInts idStr,
+  items = reverse $ getIntegers itemsStr,
   operation = operation',
-  testDivisor = head (getInts testStr),
+  testDivisor = head (getIntegers testStr),
   test = test',
-  trueMonkey = fromInteger $ head $ getInts trueStr,
-  falseMonkey = fromInteger $ head $ getInts falseStr}
+  trueMonkey = head $ getInts trueStr,
+  falseMonkey = head $ getInts falseStr}
   where
     operation'
       | words opStr !! 5 == "old" = \x -> x `op` x
@@ -63,8 +63,8 @@ parseMonkey [idStr, itemsStr, opStr, testStr, trueStr, falseStr] = Monkey {
           "+" -> (+)
           "*" -> (*)
           _   -> error "Parse error"
-        c = head (getInts opStr)
-    test' = \x -> x `mod` n == 0 where n = head (getInts testStr)
+        c = head (getIntegers opStr)
+    test' = \x -> x `mod` n == 0 where n = head (getIntegers testStr)
 parseMonkey _ = error "Parse error"
 
 -- Part 1

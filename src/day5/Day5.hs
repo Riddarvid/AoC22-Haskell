@@ -34,7 +34,7 @@ parseMoves :: [String] -> [Instruction]
 parseMoves = map parseMove
   where
     parseMove :: String -> Instruction
-    parseMove moveLine = case map fromInteger (getInts moveLine) of
+    parseMove moveLine = case getInts moveLine of
       [n, from, to] -> Move n from to
       _             -> error "Parse error"
 

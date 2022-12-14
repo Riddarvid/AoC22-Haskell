@@ -1,7 +1,7 @@
 module Day4 (solve) where
 
 import           Solution    (Solution (I))
-import           StringUtils (getIntegers, getInts)
+import           StringUtils (getIntegers)
 
 solve :: String -> (Solution, Solution)
 solve input = (I part1, I part2)

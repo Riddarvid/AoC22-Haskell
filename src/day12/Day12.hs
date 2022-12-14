@@ -7,7 +7,7 @@ import qualified Data.HashSet      as HS
 import           Data.Maybe        (fromJust)
 import           Graphs            (Path, nodesFromPath, shortestPathBFS,
                                     shortestPathBFS')
-import           Solution          (Solution (I, S))
+import           Solution          (Solution (S))
 import           StringUtils       (stringsToCharMap)
 
 solve :: String -> (Solution, Solution)

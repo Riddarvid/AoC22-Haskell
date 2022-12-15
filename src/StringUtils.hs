@@ -1,4 +1,4 @@
-module StringUtils (getInts, getIntegers, stringsToCharMap) where
+module StringUtils (getInts, getIntegers, getIntsNeg, getIntegersNeg, stringsToCharMap) where
 
 import           Data.HashMap.Lazy (HashMap)
 import qualified Data.HashMap.Lazy as HM
@@ -12,6 +12,15 @@ getInts input = map read $ getAllTextMatches $ input =~ intRegex
 
 getIntegers :: String -> [Integer]
 getIntegers input = map read $ getAllTextMatches $ input =~ intRegex
+
+negIntRegex :: String
+negIntRegex = "-?\\d+"
+
+getIntsNeg :: String -> [Int]
+getIntsNeg input = map read $ getAllTextMatches $ input =~ negIntRegex
+
+getIntegersNeg :: String -> [Integer]
+getIntegersNeg input = map read $ getAllTextMatches $ input =~ negIntRegex
 
 type Pos = (Int, Int)
 

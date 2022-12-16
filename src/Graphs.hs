@@ -17,29 +17,39 @@ instance (Show a) => Show (Edge a) where
   show :: Edge a -> String
   show (Edge (from, to)) = show from ++ " -> " ++ show to
 
+{-
+distancesBFSInternal :: (Eq a, Hashable a) => HashMap a (Pre a) -> HashMap a (Pre a) -> (a -> [a]) -> Integer -> HashMap a Integer
+distancesBFSInternal lastLayer visited _ _ | HM.null lastLayer = visited
+distancesBFSInternal lastLayer visited adjacencyFun layerIndex = distancesBFSInternal lastLayer' visited' adjacencyFun
+  where
+    lastLayer' = nextLayer lastLayer visited adjacencyFun
+    visited' = HM.union lastLayer' visited-}
+
 shortestPathBFS :: (Eq a, Hashable a) => a -> a -> (a -> [a]) -> Maybe (Path a)
 shortestPathBFS start = shortestPathBFS' [start]
 
 shortestPathBFS' :: (Eq a, Hashable a) => [a] -> a -> (a -> [a]) -> Maybe (Path a)
-shortestPathBFS' startNodes goal adjacencyFun = shortestPathBFSInternal startNodes' startNodes' adjacencyFun goal
+shortestPathBFS' startNodes goal adjacencyFun = shortestPathBFSInternal (HM.keysSet startNodes') startNodes' adjacencyFun goal
   where
     startNodes' = HM.fromList [(start, End) | start <- startNodes]
 
-shortestPathBFSInternal :: (Eq a, Hashable a) => HashMap a (Pre a) -> HashMap a (Pre a) -> (a -> [a]) -> a -> Maybe (Path a)
+shortestPathBFSInternal :: (Eq a, Hashable a) => HashSet a -> HashMap a (Pre a) -> (a -> [a]) -> a -> Maybe (Path a)
 shortestPathBFSInternal lastLayer visited adjacencyFun goal
-  | goal `HM.member` lastLayer = Just $ buildPath visited goal
-  | otherwise = if HM.null lastLayer'
+  | goal `elem` lastLayer = Just $ buildPath visited goal
+  | otherwise = if null lastLayer'
     then Nothing
-    else shortestPathBFSInternal lastLayer' visited' adjacencyFun goal
+    else shortestPathBFSInternal (HM.keysSet lastLayer') visited' adjacencyFun goal
   where
-    lastLayer' = nextLayer lastLayer visited adjacencyFun
+    lastLayer' = nextLayer lastLayer (HM.keysSet visited) adjacencyFun
     visited' = HM.union lastLayer' visited
 
-nextLayer :: (Eq a, Hashable a) => HashMap a (Pre a) -> HashMap a (Pre a) -> (a -> [a]) -> HashMap a (Pre a)
-nextLayer lastLayer visited adjacencyFun = foldr (HM.union . newNeighbors visited adjacencyFun) HM.empty (HM.keys lastLayer)
+nextLayer :: (Eq a, Hashable a, Foldable t) => t a -> t a -> (a -> [a]) -> HashMap a (Pre a)
+nextLayer lastLayer visited adjacencyFun = foldr (HM.union . newNeighbors visited adjacencyFun) HM.empty lastLayer
 
-newNeighbors :: (Eq a, Hashable a) => HashMap a (Pre a) -> (a -> [a]) -> a -> HashMap a (Pre a)
-newNeighbors visited adjacency current = HM.fromList $ [(neighbor, Pre current) | neighbor <- adjacency current, not $ neighbor `HM.member` visited]
+newNeighbors :: (Eq a, Hashable a, Foldable t) => t a -> (a -> [a]) -> a -> HashMap a (Pre a)
+newNeighbors visited adjacency current = HM.fromList $ [(neighbor, Pre current) | neighbor <- adjacency current, neighbor `notElem` visited]
+
+-- Path building
 
 buildPath :: (Eq a, Hashable a) => HashMap a (Pre a) -> a -> Path a
 buildPath preMap current = case preMap ! current of

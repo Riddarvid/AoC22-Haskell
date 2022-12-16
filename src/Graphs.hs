@@ -1,5 +1,5 @@
 {-# LANGUAGE InstanceSigs #-}
-module Graphs (shortestPathBFS, shortestPathBFS', nodesFromPath, Edge, Path) where
+module Graphs (shortestPathBFS, shortestPathBFS', nodesFromPath, distancesBFS, Edge, Path) where
 
 import           Data.Hashable     (Hashable)
 import           Data.HashMap.Lazy (HashMap, (!))
@@ -17,13 +17,21 @@ instance (Show a) => Show (Edge a) where
   show :: Edge a -> String
   show (Edge (from, to)) = show from ++ " -> " ++ show to
 
-{-
-distancesBFSInternal :: (Eq a, Hashable a) => HashMap a (Pre a) -> HashMap a (Pre a) -> (a -> [a]) -> Integer -> HashMap a Integer
-distancesBFSInternal lastLayer visited _ _ | HM.null lastLayer = visited
-distancesBFSInternal lastLayer visited adjacencyFun layerIndex = distancesBFSInternal lastLayer' visited' adjacencyFun
+-- Distance to all
+
+distancesBFS :: (Eq a, Hashable a) => a -> (a -> [a]) -> HashMap a Integer
+distancesBFS start adjacencyFun = distancesBFSInternal (HM.keysSet startMap) startMap adjacencyFun 1
   where
-    lastLayer' = nextLayer lastLayer visited adjacencyFun
-    visited' = HM.union lastLayer' visited-}
+    startMap = HM.singleton start 0
+
+distancesBFSInternal :: (Eq a, Hashable a) => HashSet a -> HashMap a Integer -> (a -> [a]) -> Integer -> HashMap a Integer
+distancesBFSInternal lastLayer visited _ _ | null lastLayer = visited
+distancesBFSInternal lastLayer visited adjacencyFun layerIndex = distancesBFSInternal (HM.keysSet lastLayer') visited' adjacencyFun (layerIndex + 1)
+  where
+    lastLayer' = nextLayer lastLayer (HM.keysSet visited) adjacencyFun
+    visited' = HM.union (HM.map (const layerIndex) lastLayer') visited
+
+-- Shortest path from start(s) to goal
 
 shortestPathBFS :: (Eq a, Hashable a) => a -> a -> (a -> [a]) -> Maybe (Path a)
 shortestPathBFS start = shortestPathBFS' [start]
@@ -42,6 +50,8 @@ shortestPathBFSInternal lastLayer visited adjacencyFun goal
   where
     lastLayer' = nextLayer lastLayer (HM.keysSet visited) adjacencyFun
     visited' = HM.union lastLayer' visited
+
+-- General
 
 nextLayer :: (Eq a, Hashable a, Foldable t) => t a -> t a -> (a -> [a]) -> HashMap a (Pre a)
 nextLayer lastLayer visited adjacencyFun = foldr (HM.union . newNeighbors visited adjacencyFun) HM.empty lastLayer

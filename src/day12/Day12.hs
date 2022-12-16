@@ -2,9 +2,9 @@ module Day12 (solve) where
 import           Data.Char         (ord)
 import           Data.HashMap.Lazy (HashMap, (!))
 import qualified Data.HashMap.Lazy as HM
-import           Data.HashSet      (HashSet)
-import qualified Data.HashSet      as HS
 import           Data.Maybe        (fromJust)
+import           Data.Set          (Set)
+import qualified Data.Set          as Set
 import           Graphs            (Path, nodesFromPath, shortestPathBFS,
                                     shortestPathBFS')
 import           Solution          (Solution (S))
@@ -64,12 +64,12 @@ showRed c = red ++ [c] ++ reset
 showPath :: HashMap Pos Char -> Path Pos -> Int -> Int -> String
 showPath charMap path maxX maxY = unlines $ [showLine charMap (nodesFromPath path) maxX y | y <- [0 .. maxY]]
 
-showLine :: HashMap Pos Char -> HashSet Pos -> Int -> Int -> String
+showLine :: HashMap Pos Char -> Set Pos -> Int -> Int -> String
 showLine charMap path maxX y = foldr (\pos str -> showPos charMap path pos ++ str) "" ([(x, y) | x <- [0 .. maxX]])
 
-showPos :: HashMap Pos Char -> HashSet Pos -> Pos -> String
+showPos :: HashMap Pos Char -> Set Pos -> Pos -> String
 showPos charMap path pos
-  | pos `HS.member` path = showRed c
+  | pos `Set.member` path = showRed c
   | otherwise = [c]
   where
     c = charMap ! pos

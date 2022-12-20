@@ -1,6 +1,6 @@
 module Day16 (solve) where
-import           Control.Monad.State (State, evalState, get)
-import           Data.List           (delete, find, sort)
+import           Control.Monad.State (State, evalState, get, modify)
+import           Data.List           (delete, find, permutations, sort)
 import           Data.Map            (Map, (!))
 import qualified Data.Map            as Map
 import           Data.Maybe          (fromJust)
@@ -18,8 +18,8 @@ solve input = (I part1, I part2)
     valves = parseInput input
     distanceMap = generateDistances valves
     valveMap = Map.fromList $ map (\valve -> (vName valve, valve)) $ filter (\valve -> vFlow valve /= 0 || vName valve == "AA") valves
-    part1 = maxFlow 1 30 distanceMap valveMap
-    part2 = maxFlow 1 30 distanceMap valveMap
+    part1 = maxFlow distanceMap valveMap 30
+    part2 = maxFlow distanceMap valveMap 26
 
 data Valve = Valve{
   vName      :: String,
@@ -29,6 +29,8 @@ data Valve = Valve{
 
 
 type DistanceMap = Map String (Map String Integer)
+
+type ValveMap = Map String Valve
 
 -- Parsing
 
@@ -63,81 +65,41 @@ distancesTo startValve adjacencyFun = Map.mapKeys vName $ Map.filterWithKey (\va
 
 -- General
 
--- Process: At each iteration, an actor chooses whether to move to a new free location or to stop working
--- If you stop working, you never start working again
--- Each actor keeps track of how much flow they have contributed
--- We're done when all actors have stopped working
--- If an actor is out of time it must stop working
--- An actor can only move to a location that has not yet been visited
+-- The general solution is based on a recurrence
 
-data Actor = Actor (Maybe String) Integer
-  deriving Show
+type FlowMem = (String, Set String, Integer)
 
-data ActorState = ActorState [Actor] (Set String)
-  deriving Show
+type MaxMap = Map FlowMem Integer
 
-type GraphState = (DistanceMap, Map String Valve)
+maxFlow :: DistanceMap -> ValveMap -> Integer -> Integer
+maxFlow distanceMap valveMap time = evalState (maxFlow' distanceMap valveMap (Set.singleton "AA") (Set.delete "AA" $ Map.keysSet valveMap) "AA" time) Map.empty
 
-maxFlow :: Int -> Integer -> DistanceMap -> Map String Valve -> Integer
-maxFlow nActors time distanceMap valveMap = evalState (maxFlow' (ActorState (replicate nActors (Actor (Just "AA") time)) (Set.delete "AA" $ Map.keysSet valveMap))) (distanceMap, valveMap)
+maxFlow' :: DistanceMap -> ValveMap -> Set String -> Set String -> String -> Integer -> State MaxMap Integer
+maxFlow' _ _ _ _ _ timeLeft | timeLeft <= 0 = return 0
+maxFlow' distanceMap valveMap visited remaining currentRoom timeLeft = do
+  maxMap <- get
+  case Map.lookup (currentRoom, visited, timeLeft) maxMap of
+    Just flow -> return flow
+    Nothing -> do
+      subFlows <- mapM (subFlow distanceMap valveMap visited remaining timeLeft currentRoom) (Set.toList remaining)
+      let maxSubFlow = foldr (\(_, flow) acc -> max flow acc) 0 subFlows
+      let flow = flowGenerated valveMap currentRoom timeLeft + maxSubFlow
+      modify (Map.insert (currentRoom, visited, timeLeft) flow) -- Memoization step
+      return flow
 
-maxFlow' :: ActorState -> State GraphState Integer
---maxFlow' actorState | trace (show actorState) False = undefined
-maxFlow' actorState@(ActorState actors _)
-  | all (\(Actor room _) -> isNothing room) actors = return 0 -- If all actors have stopped working
-  | otherwise = do
-    nextStates <- getNextPossibleStates actorState  -- All combinations of new locations and stopping for all workers
-    subFlows <- mapM maxFlow' nextStates            -- Recursive call to find the maximum flow from these sub-states
-    currentFlow <- flowGenerated actorState
-    return $ currentFlow + maximum subFlows
-
-getNextPossibleStates :: ActorState -> State GraphState [ActorState]
-getNextPossibleStates state@(ActorState [] _) = return [state]
-getNextPossibleStates (ActorState (actor:actors) remaining) = do
-  nextActors <- getPossibleRoutes actor remaining -- Should take available and return maybe
-  states <- mapM (\actor'@(Actor room _) -> map (\(ActorState actors' remaining'') -> ActorState (actor' : actors') remaining'') <$> getNextPossibleStates (ActorState actors (remaining' room))) nextActors
-  return $ concat states
+subFlow :: DistanceMap -> ValveMap -> Set String -> Set String -> Integer -> String -> String -> State MaxMap (FlowMem, Integer)
+subFlow distanceMap valveMap visited remaining timeLeft currentRoom nextRoom = do
+  flow <- maxFlow' distanceMap valveMap visited' remaining' nextRoom timeLeft'
+  return (flowMem, flow)
   where
-    remaining' room = case room of
-      Nothing    -> remaining
-      Just room' -> Set.delete room' remaining
+    visited' = Set.insert nextRoom visited
+    remaining' = Set.delete nextRoom remaining
+    timeLeft' = spendTime distanceMap currentRoom nextRoom timeLeft
+    flowMem = (nextRoom, visited', timeLeft')
 
-getPossibleRoutes :: Actor -> Set String -> State GraphState [Actor]
-getPossibleRoutes (Actor _ timeLeft) _ | timeLeft <= 0 = return [Actor Nothing 0]
-getPossibleRoutes (Actor Nothing _) _ = return [Actor Nothing 0]
-getPossibleRoutes actor remaining = do
-  let available = Nothing : map Just (Set.toList remaining)
-  mapM (getRoute actor) available
+spendTime :: DistanceMap -> String -> String -> Integer -> Integer
+spendTime distanceMap currentRoom nextRoom timeLeft = timeLeft - ((distanceMap ! currentRoom) ! nextRoom) - 1
 
-getRoute :: Actor -> Maybe String -> State GraphState Actor
-getRoute (Actor _ _) Nothing = return $ Actor Nothing 0
-getRoute (Actor Nothing _) _ = return $ Actor Nothing 0
-getRoute (Actor room timeLeft) next = do
-  (distanceMap, _) <- get
-  let distance = (distanceMap ! fromJust room) ! fromJust next
-  return $ Actor next (timeLeft - distance - 1)
-
-
-flowGenerated :: ActorState -> State GraphState Integer
-flowGenerated (ActorState actors _) = do
-  flows <- mapM actorFlow $ filter (\(Actor _ timeLeft) -> timeLeft > 0) actors
-  return $ sum flows
-  where
-    actorFlow :: Actor -> State GraphState Integer
-    actorFlow (Actor room timeLeft) = case room of
-      Nothing -> return 0
-      Just room' -> do
-        (_, valveMap) <- get
-        return $ timeLeft * vFlow (valveMap ! room')
-
-
--- Old
-
-maxFlow'' :: String -> Integer -> DistanceMap -> Map String Valve -> Integer
-maxFlow'' currentRoom timeLeft distanceMap valveMap
-  | null reachableRoutes = 0
-  | otherwise = maximum [flowGenerated room travelCost + subFlow room travelCost | (room, travelCost) <- reachableRoutes]
-  where
-    reachableRoutes = [(room, travelCost) | room <- Map.keys valveMap, let travelCost = (distanceMap ! currentRoom) ! room, travelCost + 1 < timeLeft]
-    subFlow room travelCost = maxFlow'' room (timeLeft - travelCost - 1) distanceMap (Map.delete room valveMap)
-    flowGenerated room travelCost = (timeLeft - travelCost - 1) * vFlow (valveMap ! room)
+-- We already know that timeLeft is > 0
+flowGenerated :: ValveMap -> String -> Integer -> Integer
+flowGenerated valveMap currentRoom timeLeft = timeLeft * vFlow (valveMap ! currentRoom)

@@ -1,10 +1,12 @@
 {-# LANGUAGE InstanceSigs #-}
 module Day13 (solve) where
-import           Data.Char       (isDigit)
-import           Data.List       (sort)
-import           Data.List.Utils (split)
-import           Solution        (Solution (I))
-import           Utils           (indexOf)
+import           Data.List        (sort)
+import           Data.List.Utils  (split)
+import           Solution         (Solution (I))
+import           Text.Parsec      (Parsec, between, digit, many1, parse, sepBy)
+import           Text.Parsec.Char (char)
+import           Text.Parsec.Prim ((<|>))
+import           Utils            (indexOf)
 
 solve :: String -> (Solution, Solution)
 solve input = (I part1, I part2)
@@ -31,7 +33,7 @@ instance Ord Packet where
     EQ     -> compare (PList lefts) (PList rights)
     result -> result
 
--- Parsing
+-- Parse pairs
 
 parsePairs :: String -> [(Packet, Packet)]
 parsePairs input = map parsePair $ split [""] $ lines input
@@ -40,31 +42,18 @@ parsePair :: [String] -> (Packet, Packet)
 parsePair [packetStr1, packetStr2] = (parsePacket packetStr1, parsePacket packetStr2)
 parsePair _                    = error "Should receive exactly two packets"
 
--- Below could probably be done better. Might improve.
+-- Parse packets
 
 parsePacket :: String -> Packet
-parsePacket str = snd $ parsePacket' str
+parsePacket str = case parse packetParser "" str of
+  Left err     -> error $ show err
+  Right packet -> packet
 
-parsePacket' :: String -> (String, Packet)
-parsePacket' str
-  | head str == '[' = parsePList str
-  | otherwise = parsePInt str
+packetParser :: Parsec String () Packet
+packetParser = numberParser <|> listParser
 
-parsePList :: String -> (String, Packet)
-parsePList str = (str', PList packets)
-  where
-    (str', packets) = parsePacketList $ tail str
+numberParser :: Parsec String () Packet
+numberParser = PInt . read <$> many1 digit
 
-parsePacketList :: String -> (String, [Packet])
-parsePacketList str
-  | head str == ']' = (tail str, [])
-  | head str == ',' = parsePacketList $ tail str
-  | otherwise = (str'', packet : packets)
-  where
-    (str', packet) = parsePacket' str
-    (str'', packets) = parsePacketList str'
-
-parsePInt :: String -> (String, Packet)
-parsePInt str = (str', PInt (read intStr))
-  where
-    (intStr, str') = span isDigit str
+listParser :: Parsec String () Packet
+listParser = PList <$> between (char '[') (char ']') (sepBy packetParser (char ','))

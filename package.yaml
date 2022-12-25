@@ -29,6 +29,7 @@ dependencies:
   - containers
   - mtl
   - hashable
+  - parsec
 
 ghc-options:
   - -Wall
@@ -60,6 +61,7 @@ library:
     - src/day14
     - src/day15
     - src/day16
+    - src/day17
 
 executables:
   aoc22-haskell-exe:

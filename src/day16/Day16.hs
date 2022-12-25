@@ -18,8 +18,8 @@ solve input = (I part1, I part2)
     valves = parseInput input
     distanceMap = generateDistances valves
     valveMap = Map.fromList $ map (\valve -> (vName valve, valve)) $ filter (\valve -> vFlow valve /= 0 || vName valve == "AA") valves
-    part1 = maxFlow distanceMap valveMap 30
-    part2 = maxFlow distanceMap valveMap 26
+    part1 = maxFlow1 distanceMap valveMap 30
+    part2 = maxFlow2 distanceMap valveMap 26
 
 data Valve = Valve{
   vName      :: String,
@@ -67,25 +67,34 @@ distancesTo startValve adjacencyFun = Map.mapKeys vName $ Map.filterWithKey (\va
 
 -- The general solution is based on a recurrence
 
-type FlowMem = (String, Set String, Integer)
+type FlowMem = (Set String, Set (String, Integer))
 
 type MaxMap = Map FlowMem Integer
 
-maxFlow :: DistanceMap -> ValveMap -> Integer -> Integer
-maxFlow distanceMap valveMap time = evalState (maxFlow' distanceMap valveMap (Set.singleton "AA") (Set.delete "AA" $ Map.keysSet valveMap) "AA" time) Map.empty
+data Actor = Actor String String Integer
 
-maxFlow' :: DistanceMap -> ValveMap -> Set String -> Set String -> String -> Integer -> State MaxMap Integer
-maxFlow' _ _ _ _ _ timeLeft | timeLeft <= 0 = return 0
-maxFlow' distanceMap valveMap visited remaining currentRoom timeLeft = do
+maxFlow1 :: DistanceMap -> ValveMap -> Integer -> Integer
+maxFlow1 distanceMap valveMap time = evalState (maxFlow' distanceMap valveMap (Set.singleton "AA") (Set.delete "AA" $ Map.keysSet valveMap) (Set.singleton $ Actor "Me" "AA" time)) Map.empty
+
+maxFlow2 :: DistanceMap -> ValveMap -> Integer -> Integer
+maxFlow2 distanceMap valveMap time = evalState (maxFlow' distanceMap valveMap (Set.singleton "AA") (Set.delete "AA" $ Map.keysSet valveMap) (Set.fromList [Actor "Me" "AA" time, Actor "Elephant" "AA" time])) Map.empty
+
+maxFlow' :: DistanceMap -> ValveMap -> Set String -> Set String -> Set Actor -> State MaxMap Integer
+maxFlow' _ _ _ _ timeLeft | timeLeft <= 0 = return 0
+maxFlow' distanceMap valveMap visited remaining actors = do
   maxMap <- get
-  case Map.lookup (currentRoom, visited, timeLeft) maxMap of
+  let mem = actorsToMem actors
+  case Map.lookup (visited, mem) maxMap of
     Just flow -> return flow
     Nothing -> do
       subFlows <- mapM (subFlow distanceMap valveMap visited remaining timeLeft currentRoom) (Set.toList remaining)
       let maxSubFlow = foldr (\(_, flow) acc -> max flow acc) 0 subFlows
-      let flow = flowGenerated valveMap currentRoom timeLeft + maxSubFlow
-      modify (Map.insert (currentRoom, visited, timeLeft) flow) -- Memoization step
+      let flow = flowGenerated valveMap actors + maxSubFlow
+      modify (Map.insert (visited, mem) flow) -- Memoization step
       return flow
+
+actorsToMem :: Set Actor -> Set (String, Integer)
+actorsToMem = Set.map (\(Actor _ location time) -> (location, time))
 
 subFlow :: DistanceMap -> ValveMap -> Set String -> Set String -> Integer -> String -> String -> State MaxMap (FlowMem, Integer)
 subFlow distanceMap valveMap visited remaining timeLeft currentRoom nextRoom = do
@@ -101,5 +110,9 @@ spendTime :: DistanceMap -> String -> String -> Integer -> Integer
 spendTime distanceMap currentRoom nextRoom timeLeft = timeLeft - ((distanceMap ! currentRoom) ! nextRoom) - 1
 
 -- We already know that timeLeft is > 0
-flowGenerated :: ValveMap -> String -> Integer -> Integer
-flowGenerated valveMap currentRoom timeLeft = timeLeft * vFlow (valveMap ! currentRoom)
+flowGenerated :: ValveMap -> Set Actor -> Integer
+flowGenerated valveMap = Set.fold (\actor acc -> acc + flowByActor valveMap actor) 0
+
+flowByActor :: ValveMap -> Actor -> Integer
+flowByActor valveMap (Actor _ currentRoom timeLeft) = timeLeft * vFlow (valveMap ! currentRoom)
+

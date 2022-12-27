@@ -1,8 +1,6 @@
 module Day15alt (solve, testBlock, splitBlock) where
-import           Data.List       (find, partition)
+import           Data.List       (partition)
 import           Data.List.Utils (uniq)
-import           Data.Maybe      (fromJust)
-import           Debug.Trace     (trace)
 import           Solution        (Solution (I))
 import           StringUtils     (getIntegersNeg)
 

@@ -1,16 +1,14 @@
+{-# LANGUAGE TupleSections #-}
 module Day16 (solve) where
-import           Control.Monad.State (State, evalState, get, modify)
-import           Data.List           (delete, find, permutations, sort)
-import           Data.Map            (Map, (!))
-import qualified Data.Map            as Map
-import           Data.Maybe          (fromJust)
-import           Data.Set            (Set)
-import qualified Data.Set            as Set
-import           Debug.Trace         (trace)
-import           GHC.Data.Maybe      (isNothing)
-import           Graphs              (distancesBFS)
-import           Solution            (Solution (I, S))
-import           StringUtils         (getIntegers)
+import           Data.List   (find, maximumBy)
+import           Data.Map    (Map, (!))
+import qualified Data.Map    as Map
+import           Data.Maybe  (fromJust)
+import           Data.Set    (Set)
+import qualified Data.Set    as Set
+import           Graphs      (distancesBFS)
+import           Solution    (Solution (I))
+import           StringUtils (getIntegers)
 
 solve :: String -> (Solution, Solution)
 solve input = (I part1, I part2)
@@ -18,8 +16,8 @@ solve input = (I part1, I part2)
     valves = parseInput input
     distanceMap = generateDistances valves
     valveMap = Map.fromList $ map (\valve -> (vName valve, valve)) $ filter (\valve -> vFlow valve /= 0 || vName valve == "AA") valves
-    part1 = maxFlow1 distanceMap valveMap 30
-    part2 = maxFlow2 distanceMap valveMap 26
+    (_, part1) = solvePart1 distanceMap valveMap
+    part2 = solvePart2 distanceMap valveMap
 
 data Valve = Valve{
   vName      :: String,
@@ -62,57 +60,73 @@ generateDistances valves = Map.fromList [(vName valve, distancesTo valve adjacen
 distancesTo :: Valve -> (Valve -> [Valve]) -> Map String Integer
 distancesTo startValve adjacencyFun = Map.mapKeys vName $ Map.filterWithKey (\valve _ -> vFlow valve /= 0) (distancesBFS startValve adjacencyFun)
 
+-- Part 1
+
+solvePart1 :: DistanceMap -> ValveMap -> (Path, Integer)
+solvePart1 distanceMap valveMap = maximumBy (\a b -> compare (snd a) (snd b)) $ Set.map (\path -> (path, flow valveMap path)) paths
+  where
+    rooms = Map.keysSet $ Map.delete "AA" valveMap
+    paths = generatePaths Simple distanceMap rooms "AA" 30
+
+-- Part 2
+-- Process:
+-- 1. Find all flows with corresponding paths
+-- 2. Group the paths so that for each set of nodes, we have a flow. That is, for all paths visiting the same nodes, find the max flow.
+-- 3. For all elements in this new map, find the largest flow for a complementing path.
+-- 4. Find the maximum of these.
+
+solvePart2 :: DistanceMap -> Map String Valve -> Integer
+solvePart2 distanceMap valveMap = maximum $ Set.map (flowByMatching flowsByNodes) matchings
+  where
+    rooms = Map.keysSet $ Map.delete "AA" valveMap
+    paths = generatePaths Full distanceMap rooms "AA" 26
+    flowsByPaths = Map.fromSet (flow valveMap) paths
+    flowsByNodes = Map.mapKeysWith max pathToNodes flowsByPaths
+    matchings = generateMatchings $ Map.keysSet flowsByNodes
+
+pathToNodes :: Path -> Set String
+pathToNodes path = Set.delete "AA" $ Set.fromList $ map fst path -- Delete AA to make checking for complements easier
+
+type Matching = (Set String, Set String)
+
+generateMatchings :: Set (Set String) -> Set Matching
+generateMatchings nodeSets = Set.unions $ Set.map (getMatchings nodeSets) nodeSets
+
+getMatchings :: Set (Set String) -> Set String -> Set Matching
+getMatchings nodeSets currentSet = Set.map (currentSet,) $ Set.filter (complementing currentSet) nodeSets
+
+complementing :: Set String -> Set String -> Bool
+complementing set1 set2 = Set.size (Set.intersection set1 set2) == 0
+
+flowByMatching :: Map (Set String) Integer -> Matching -> Integer
+flowByMatching flowMap (nodesA, nodesB) = (flowMap ! nodesA) + (flowMap ! nodesB)
 
 -- General
 
--- The general solution is based on a recurrence
+type Path = [(String, Integer)]
 
-type FlowMem = (Set String, Set (String, Integer))
+data Mode = Simple | Full
 
-type MaxMap = Map FlowMem Integer
-
-data Actor = Actor String String Integer
-
-maxFlow1 :: DistanceMap -> ValveMap -> Integer -> Integer
-maxFlow1 distanceMap valveMap time = evalState (maxFlow' distanceMap valveMap (Set.singleton "AA") (Set.delete "AA" $ Map.keysSet valveMap) (Set.singleton $ Actor "Me" "AA" time)) Map.empty
-
-maxFlow2 :: DistanceMap -> ValveMap -> Integer -> Integer
-maxFlow2 distanceMap valveMap time = evalState (maxFlow' distanceMap valveMap (Set.singleton "AA") (Set.delete "AA" $ Map.keysSet valveMap) (Set.fromList [Actor "Me" "AA" time, Actor "Elephant" "AA" time])) Map.empty
-
-maxFlow' :: DistanceMap -> ValveMap -> Set String -> Set String -> Set Actor -> State MaxMap Integer
-maxFlow' _ _ _ _ timeLeft | timeLeft <= 0 = return 0
-maxFlow' distanceMap valveMap visited remaining actors = do
-  maxMap <- get
-  let mem = actorsToMem actors
-  case Map.lookup (visited, mem) maxMap of
-    Just flow -> return flow
-    Nothing -> do
-      subFlows <- mapM (subFlow distanceMap valveMap visited remaining timeLeft currentRoom) (Set.toList remaining)
-      let maxSubFlow = foldr (\(_, flow) acc -> max flow acc) 0 subFlows
-      let flow = flowGenerated valveMap actors + maxSubFlow
-      modify (Map.insert (visited, mem) flow) -- Memoization step
-      return flow
-
-actorsToMem :: Set Actor -> Set (String, Integer)
-actorsToMem = Set.map (\(Actor _ location time) -> (location, time))
-
-subFlow :: DistanceMap -> ValveMap -> Set String -> Set String -> Integer -> String -> String -> State MaxMap (FlowMem, Integer)
-subFlow distanceMap valveMap visited remaining timeLeft currentRoom nextRoom = do
-  flow <- maxFlow' distanceMap valveMap visited' remaining' nextRoom timeLeft'
-  return (flowMem, flow)
+generatePaths :: Mode -> DistanceMap -> Set String -> String -> Integer -> Set Path
+generatePaths _ _ _ _ timeLeft | timeLeft < 0 = Set.singleton []
+generatePaths _ _ remaining startRoom timeLeft | Set.size remaining == 0 = Set.singleton [(startRoom, timeLeft)]
+generatePaths mode distanceMap remaining startRoom timeLeft = case mode of
+  Simple -> paths
+  Full   -> Set.insert [(startRoom, timeLeft)] paths
   where
-    visited' = Set.insert nextRoom visited
+    subPaths = Set.unions $ Set.map (subPathsByNext mode distanceMap remaining startRoom timeLeft) remaining
+    paths = Set.map ((startRoom, timeLeft) :) subPaths
+
+subPathsByNext :: Mode ->  DistanceMap -> Set String -> String -> Integer -> String -> Set Path
+subPathsByNext mode distanceMap remaining room timeLeft nextRoom = generatePaths mode distanceMap remaining' nextRoom timeLeft'
+  where
     remaining' = Set.delete nextRoom remaining
-    timeLeft' = spendTime distanceMap currentRoom nextRoom timeLeft
-    flowMem = (nextRoom, visited', timeLeft')
+    timeLeft' = spendTime distanceMap room nextRoom timeLeft
 
 spendTime :: DistanceMap -> String -> String -> Integer -> Integer
-spendTime distanceMap currentRoom nextRoom timeLeft = timeLeft - ((distanceMap ! currentRoom) ! nextRoom) - 1
+spendTime distanceMap room nextRoom timeLeft = timeLeft - (travelTime + 1)
+  where
+    travelTime = (distanceMap ! room) ! nextRoom
 
--- We already know that timeLeft is > 0
-flowGenerated :: ValveMap -> Set Actor -> Integer
-flowGenerated valveMap = Set.fold (\actor acc -> acc + flowByActor valveMap actor) 0
-
-flowByActor :: ValveMap -> Actor -> Integer
-flowByActor valveMap (Actor _ currentRoom timeLeft) = timeLeft * vFlow (valveMap ! currentRoom)
-
+flow :: ValveMap -> Path -> Integer
+flow valveMap = foldr (\(room, timeLeft) acc -> timeLeft * vFlow (valveMap ! room) + acc) 0

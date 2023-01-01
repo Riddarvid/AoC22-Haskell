@@ -16,7 +16,7 @@ solve input = (I part1, I part2)
     valves = parseInput input
     distanceMap = generateDistances valves
     valveMap = Map.fromList $ map (\valve -> (vName valve, valve)) $ filter (\valve -> vFlow valve /= 0 || vName valve == "AA") valves
-    (_, part1) = solvePart1 distanceMap valveMap
+    part1 = solvePart1 distanceMap valveMap
     part2 = solvePart2 distanceMap valveMap
 
 data Valve = Valve{
@@ -62,8 +62,8 @@ distancesTo startValve adjacencyFun = Map.mapKeys vName $ Map.filterWithKey (\va
 
 -- Part 1
 
-solvePart1 :: DistanceMap -> ValveMap -> (Path, Integer)
-solvePart1 distanceMap valveMap = maximumBy (\a b -> compare (snd a) (snd b)) $ Set.map (\path -> (path, flow valveMap path)) paths
+solvePart1 :: DistanceMap -> ValveMap -> Integer
+solvePart1 distanceMap valveMap = maximum $ Set.map (flow valveMap) paths
   where
     rooms = Map.keysSet $ Map.delete "AA" valveMap
     paths = generatePaths Simple distanceMap rooms "AA" 30

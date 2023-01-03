@@ -1,6 +1,6 @@
 {-# LANGUAGE TupleSections #-}
 module Day16 (solve) where
-import           Data.List   (find, maximumBy)
+import           Data.List   (find)
 import           Data.Map    (Map, (!))
 import qualified Data.Map    as Map
 import           Data.Maybe  (fromJust)

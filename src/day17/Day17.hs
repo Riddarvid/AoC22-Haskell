@@ -1,27 +1,20 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use second" #-}
 module Day17 (solve) where
-import           Control.Monad.State (MonadState (get, put), State, evalState,
-                                      execState, gets, modify, unless, when)
-import           Data.Maybe          (fromJust, isJust, isNothing)
+import           Control.Monad.State (MonadState (get), State, evalState,
+                                      execState, gets, modify, when)
+import           Data.Maybe          (fromJust, isJust)
 import           Data.Set            (Set)
 import qualified Data.Set            as Set
-import           Debug.Trace         (trace)
-import           Solution            (Solution (I, S))
+import           Solution            (Solution (I))
+import           StringUtils         (showGrid)
 
 solve :: String -> (Solution, Solution)
-solve input = (S $ showState part1, I 0)
+solve input = (I part1, I part2)
   where
     jets = parseInput input
     part1 = solvePart1 jets
-    --(_, height1) = stackRocks Set.empty 0 cycledJets $ take 2022 baseRocks
-    --(_, height2) = stackRocks Set.empty 0 cycledJets $ take 1000000000000 baseRocks
-    --cycleLength = length jets
-    --(_, cycleHeight) = stackRocks Set.empty 0 cycledJets $ take (2 * cycleLength) baseRocks
-    --nCycles = 1000000000000 `div` toInteger cycleLength
-    --offset = 1000000000000 `mod` cycleLength
-    --(_, offsetHeight) = stackRocks cycledJets $ take offset baseRocks
-    --height2 = nCycles * cycleHeight + offsetHeight
+    part2 = solvePart2 jets
 
 data Direction = DLeft | DRight | DDown
   deriving Show
@@ -97,6 +90,19 @@ isFalling = gets (isJust . rCurrent)
 
 -- Functions for manipulating rock state. The basic operation is letting one time unit (tick) pass.
 
+iterateNTicks :: Integer -> State RocksState [RocksState]
+iterateNTicks n = do
+  runNTicks n
+  s <- get
+  rest <- iterateNTicks n
+  return $ s : rest
+
+runNTicks :: Integer -> State RocksState ()
+runNTicks 0 = return ()
+runNTicks n = do
+  tick
+  runNTicks (n - 1)
+
 stackRocks :: Integer -> State RocksState ()
 stackRocks 0 = return ()
 stackRocks n = do
@@ -113,10 +119,6 @@ tick :: State RocksState ()
 tick = do
   shiftCurrent
   fallCurrent
-  --placed <- gets rPlaced
-  --current <- gets rCurrent
-  --height <- gets rHeight
-  --trace (showTower placed current (height + 10)) (return ())
 
 shiftCurrent :: State RocksState ()
 shiftCurrent = do
@@ -163,14 +165,25 @@ showState s =
   "\n\nNumber of spawned blocks: " ++ show (rFallen s) ++
   "\n\nCurrent height: " ++ show height ++
   "\n\nCurrently falling: " ++ show current ++
-  "\n\nNext few rocks to fall: " ++ show (take 5 (rRocks s)) ++
-  "\n\nNext few jets: " ++ show (take 5 (rJets s)) ++
-  --"\n\nPlaced: " ++ show (rPlaced s) ++
-  "\n\nHighest ten levels:\n\n" ++ showTower' upperLevels current (height - 10) (height + 2)
+  "\n\nNext rock to fall:\n" ++ showRock (head (rRocks s)) ++
+  "\n\nNext few jets: " ++ showJets (take 5 (rJets s)) ++
+  "\n\nHighest ten levels:\n\n" ++ showTower' upperLevels current (height - 10) (height + 6)
   where
     height = rHeight s
     current = rCurrent s
     upperLevels = Set.filter (\(_, y) -> y >= height - 10) (rPlaced s)
+
+showRock :: Rock -> String
+showRock (Rock poss) = showGrid poss 0 3 0 3
+
+showJets :: [Jet] -> String
+showJets = map showJet
+
+showJet :: Jet -> Char
+showJet (Jet direction) = case direction of
+  DDown  -> 'V'
+  DLeft  -> '<'
+  DRight -> '>'
 
 showTower :: Set Pos -> Maybe Rock -> Integer -> String
 showTower placed current = showTower' placed current 1
@@ -188,17 +201,39 @@ showPos placed current pos
     Just (Rock poss) -> if Set.member pos poss then '@' else '.'
     Nothing          -> '.'
 
-rPositions :: Maybe Rock -> Set Pos
-rPositions rock = case rock of
-  Just (Rock poss) -> poss
-  Nothing          -> Set.empty
-
 -- Part 1
 
-solvePart1 :: [Jet] -> RocksState
-solvePart1 jets = state
+solvePart1 :: [Jet] -> Integer
+solvePart1 jets = rHeight state
   where
     state = execState (stackRocks 2022) startState
     startState = newState rocks jets'
     jets' = cycle jets
     rocks = cycle baseRocks
+
+-- Part 2
+
+solvePart2 :: [Jet] -> Integer
+solvePart2 jets = cyclePart + remainingPart
+  where
+    (cycleBlocks, cycleHeight) = findCycle jets
+    remainingBlocks = 1000000000000 `mod` cycleBlocks + cycleBlocks
+    cyclePart = ((1000000000000 `div` cycleBlocks) - 1) * cycleHeight
+    remainingPart = rHeight state
+    state = execState (stackRocks remainingBlocks) startState
+    startState = newState rocks jets'
+    jets' = cycle jets
+    rocks = cycle baseRocks
+
+findCycle :: [Jet] -> (Integer, Integer)
+findCycle jets = (cycleBlocks, cycleHeight)
+  where
+    cycleHeight = rHeight s2 - rHeight s1
+    cycleBlocks = rFallen s2 - rFallen s1
+    s2 = states !! 1
+    s1 = head states
+    states = evalState (iterateNTicks $ toInteger $ length jets) startState
+    startState = newState rocks jets'
+    jets' = cycle jets
+    rocks = cycle baseRocks
+

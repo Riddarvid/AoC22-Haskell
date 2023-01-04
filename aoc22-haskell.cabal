@@ -47,7 +47,6 @@ library
       Day15
       Day15alt
       Day16
-      Day16alt
       Day17
   other-modules:
       Paths_aoc22_haskell

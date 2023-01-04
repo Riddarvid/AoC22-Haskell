@@ -1,0 +1,5 @@
+Tanke: Troligen kommer mycket vara baserat på cykler. Tyvärr kommer själva tornet vi konstruerar inte repeteras exakt, det kommer konstant byggas på.
+Vad händer om vi kör på att behålla de x översta lagren? Och låter vårt state representeras av position i sten-listan, position i jet-listan
+och mängden av de översta stenarna?
+
+Tänk om vi kollade vad det maximala fall-avståndet var?

@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use second" #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 module Day17 (solve) where
 import           Control.Monad.State (MonadState (get), State, evalState,
                                       execState, gets, modify, when)

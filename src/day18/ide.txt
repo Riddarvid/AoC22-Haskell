@@ -1,0 +1,18 @@
+Del 2
+
+Mål: Skapa en droppe som är helt "ifylld", sedan exakt samma process som i del 1.
+
+Eftersom koorinaterna inte är så himla höga tror jag att hela droppen kommer kunna containas i ett block med dimensioner
+20x20x20 typ. Detta ger ca 8000 punkter. Vi behöver avgöra vilka av dessa som är inuti droppen och vilka som inte är det
+för att skapa upp en helt ifylld droppe. Ett möjligt sätt att göra detta är att kolla i alla fyra riktningar och se om vi stöter på ett stopp
+i alla riktningar. Då måste vi typ vara helt inneslutna. Fast å andra sidan, inte nödvändigtvis. Vi kanske kör på metoden nedan istället.
+
+Om droppen hade varit större hade jag för varje "fri" sida gjort en bfs och avslutat när den antingen helt inneslöts eller blev för stor.
+Sedan behålla de ytor jag hittat eller lagt till dem till original-droppen och fortsatt så.
+
+Skapa upp ett set av noder som ligger innanför vår 20x20x20 box, men utanför droppen. Detta är egentligen det som mest liknar problembeskrivningen, eftersom
+vi typ simulerar hur vattnet/ångan rör sig. Vi börjar helt enkelt i ett av hörnen, ser till att vi har korrekta dimensioner och skapar upp våra fria sidor.
+Sedan går vi igenom alla punkter i droppen och ser hur många av deras sidor som finns i setet av fria punkter.
+
+Jag har nu confirmat att droppens min och max är 0 respektive 19 i alla koordinater. Ifall vi då rör oss i kuben som boundas av -1 och 20 borde vi enkelt
+kunna bygga upp det yttre "lagret"

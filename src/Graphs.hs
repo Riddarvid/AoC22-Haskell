@@ -72,10 +72,10 @@ distancesBFS startNode adjacency = Map.map snd (visited explored)
 
 -- Shortest path from start(s) to goal
 
-shortestPathBFS :: (Ord a) => a -> a -> (a -> [a]) -> Maybe (Path a)
+shortestPathBFS :: (Ord a) => a -> a -> AdjacencyFun a -> Maybe (Path a)
 shortestPathBFS start = shortestPathBFS' [start]
 
-shortestPathBFS' :: (Ord a) => [a] -> a -> (a -> [a]) -> Maybe (Path a)
+shortestPathBFS' :: (Ord a) => [a] -> a -> AdjacencyFun a -> Maybe (Path a)
 shortestPathBFS' startNodes goal adjacency = case endState of
   Nothing    -> Nothing
   Just state -> Just $ buildPath state goal
@@ -95,7 +95,9 @@ nodesFromPath :: (Ord a) => Path a -> Set a
 nodesFromPath = foldr (\(Edge (from, to)) nodes -> Set.insert from (Set.insert to nodes)) Set.empty
 
 -- Find all reachable nodes
--- TODO refactor so that I use a simple iterating thing for the actual BFS, which I can then use to find reachable, shortest, all etc.
 
-reachableBFS :: (Ord a) => a -> (a -> [a]) -> Set a
-reachableBFS start adjacencyFun = undefined
+reachableBFS :: (Ord a) => a -> AdjacencyFun a -> Set a
+reachableBFS start adjacency = Map.keysSet $ visited endState
+  where
+    startState = startStateSingle start adjacency
+    endState = exploreFully startState

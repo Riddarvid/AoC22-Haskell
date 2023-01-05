@@ -1,9 +1,10 @@
 {-# LANGUAGE InstanceSigs #-}
-module Graphs (shortestPathBFS, shortestPathBFS', nodesFromPath, distancesBFS, Edge, Path) where
-import           Data.Map (Map, (!))
-import qualified Data.Map as Map
-import           Data.Set (Set)
-import qualified Data.Set as Set
+module Graphs (shortestPathBFS, shortestPathBFS', nodesFromPath, distancesBFS, reachableBFS, Edge, Path) where
+import           Data.Foldable (toList)
+import           Data.Map      (Map, (!))
+import qualified Data.Map      as Map
+import           Data.Set      (Set)
+import qualified Data.Set      as Set
 
 data Pre a = Pre a | End
 
@@ -11,23 +12,63 @@ newtype Edge a = Edge (a, a)
 
 type Path a = [Edge a]
 
+type AdjacencyFun a = a -> [a]
+
 instance (Show a) => Show (Edge a) where
   show :: Edge a -> String
   show (Edge (from, to)) = show from ++ " -> " ++ show to
 
+-- General BFS
+
+data BFSState a = BFSState{
+  lastLayer    :: Set a,
+  visited      :: Map a (Pre a, Integer),-- Predecessor and layer index
+  layerIndex   :: Integer,
+  adjacencyFun :: a -> [a]
+}
+
+startStateSingle :: (Ord a) => a -> AdjacencyFun a -> BFSState a
+startStateSingle startNode = startStateMultiple [startNode]
+
+startStateMultiple :: (Ord a, Foldable t) => t a -> AdjacencyFun a -> BFSState a
+startStateMultiple startNodes adjacency = BFSState {lastLayer = lastLayer', visited = visited', layerIndex = 0, adjacencyFun = adjacency}
+  where
+    lastLayer' = Set.fromList $ toList startNodes
+    visited' = Map.fromSet (const (End, 0)) lastLayer'
+
+stepBFS :: (Ord a) => BFSState a -> BFSState a
+stepBFS state = state{lastLayer = Map.keysSet lastLayer', visited = visited', layerIndex = layerIndex'}
+  where
+    lastLayer' = nextLayer state
+    visited' = Map.union lastLayer' (visited state)
+    layerIndex' = layerIndex state + 1
+
+nextLayer :: (Ord a) => BFSState a -> Map a (Pre a, Integer)
+nextLayer state = foldr (Map.union . newNeighbors state) Map.empty (lastLayer state)
+
+newNeighbors :: (Ord a) => BFSState a -> a -> Map a (Pre a, Integer)
+newNeighbors state current = Map.fromList $ [(neighbor, (Pre current, layerIndex state)) | neighbor <- adjacency current, neighbor `Map.notMember` visited state]
+  where
+    adjacency = adjacencyFun state
+
+-- Explores one step at a time until there are no more reachable nodes
+exploreFully :: (Ord a) => BFSState a -> BFSState a
+exploreFully = until (Set.null . lastLayer) stepBFS
+
+exploreUntil :: (Ord a) => (BFSState a -> Bool) -> BFSState a -> Maybe (BFSState a)
+exploreUntil cond startState
+  | cond endState = Just endState
+  | otherwise = Nothing
+  where
+    endState = until (\state -> cond state || Set.null (lastLayer state)) stepBFS startState
+
 -- Distance to all
 
 distancesBFS :: (Ord a) => a -> (a -> [a]) -> Map a Integer
-distancesBFS start adjacencyFun = distancesBFSInternal (Map.keysSet startMap) startMap adjacencyFun 1
+distancesBFS startNode adjacency = Map.map snd (visited explored)
   where
-    startMap = Map.singleton start 0
-
-distancesBFSInternal :: (Ord a) => Set a -> Map a Integer -> (a -> [a]) -> Integer -> Map a Integer
-distancesBFSInternal lastLayer visited _ _ | null lastLayer = visited
-distancesBFSInternal lastLayer visited adjacencyFun layerIndex = distancesBFSInternal (Map.keysSet lastLayer') visited' adjacencyFun (layerIndex + 1)
-  where
-    lastLayer' = nextLayer lastLayer (Map.keysSet visited) adjacencyFun
-    visited' = Map.union (Map.map (const layerIndex) lastLayer') visited
+    startState = startStateSingle startNode adjacency
+    explored = exploreFully startState
 
 -- Shortest path from start(s) to goal
 
@@ -35,34 +76,26 @@ shortestPathBFS :: (Ord a) => a -> a -> (a -> [a]) -> Maybe (Path a)
 shortestPathBFS start = shortestPathBFS' [start]
 
 shortestPathBFS' :: (Ord a) => [a] -> a -> (a -> [a]) -> Maybe (Path a)
-shortestPathBFS' startNodes goal adjacencyFun = shortestPathBFSInternal (Map.keysSet startNodes') startNodes' adjacencyFun goal
+shortestPathBFS' startNodes goal adjacency = case endState of
+  Nothing    -> Nothing
+  Just state -> Just $ buildPath state goal
   where
-    startNodes' = Map.fromList [(start, End) | start <- startNodes]
-
-shortestPathBFSInternal :: (Ord a) => Set a -> Map a (Pre a) -> (a -> [a]) -> a -> Maybe (Path a)
-shortestPathBFSInternal lastLayer visited adjacencyFun goal
-  | goal `elem` lastLayer = Just $ buildPath visited goal
-  | otherwise = if null lastLayer'
-    then Nothing
-    else shortestPathBFSInternal (Map.keysSet lastLayer') visited' adjacencyFun goal
-  where
-    lastLayer' = nextLayer lastLayer (Map.keysSet visited) adjacencyFun
-    visited' = Map.union lastLayer' visited
-
--- General
-
-nextLayer :: (Ord a, Foldable t) => t a -> t a -> (a -> [a]) -> Map a (Pre a)
-nextLayer lastLayer visited adjacencyFun = foldr (Map.union . newNeighbors visited adjacencyFun) Map.empty lastLayer
-
-newNeighbors :: (Ord a, Foldable t) => t a -> (a -> [a]) -> a -> Map a (Pre a)
-newNeighbors visited adjacency current = Map.fromList $ [(neighbor, Pre current) | neighbor <- adjacency current, neighbor `notElem` visited]
+    startState = startStateMultiple startNodes adjacency
+    cond state = goal `elem` lastLayer state
+    endState = exploreUntil cond startState
 
 -- Path building
 
-buildPath :: (Ord a) => Map a (Pre a) -> a -> Path a
-buildPath preMap current = case preMap ! current of
-  End     -> []
-  Pre pre -> Edge (pre, current) : buildPath preMap pre
+buildPath :: (Ord a) => BFSState a -> a -> Path a
+buildPath state current = case visited state ! current of
+  (End, _)     -> []
+  (Pre pre, _) -> Edge (pre, current) : buildPath state pre
 
 nodesFromPath :: (Ord a) => Path a -> Set a
 nodesFromPath = foldr (\(Edge (from, to)) nodes -> Set.insert from (Set.insert to nodes)) Set.empty
+
+-- Find all reachable nodes
+-- TODO refactor so that I use a simple iterating thing for the actual BFS, which I can then use to find reachable, shortest, all etc.
+
+reachableBFS :: (Ord a) => a -> (a -> [a]) -> Set a
+reachableBFS start adjacencyFun = undefined

@@ -17,10 +17,10 @@ solve input = (S (showPath charMap path1 maxX maxY ++ "\n\n" ++ show part1), S (
     startPos = findPosition 'S' charMap
     goalPos = findPosition 'E' charMap
     adjacencyFun node = adjacencyTable charMap ! node
-    path1 = fromJust $ shortestPathBFS startPos goalPos adjacencyFun
+    path1 = fromJust $ shortestPathBFS startPos goalPos adjacencyFun Nothing
     part1 = toInteger $ length path1
     startPos' = findPositions 'a' charMap
-    path2 = fromJust $ shortestPathBFS' startPos' goalPos adjacencyFun
+    path2 = fromJust $ shortestPathBFS' startPos' goalPos adjacencyFun Nothing
     part2 = toInteger $ length path2
 
 type Pos = (Int, Int)

@@ -58,7 +58,7 @@ generateDistances valves = Map.fromList [(vName valve, distancesTo valve adjacen
     adjacencyFun = getAdjacencyFun valves
 
 distancesTo :: Valve -> (Valve -> [Valve]) -> Map String Integer
-distancesTo startValve adjacencyFun = Map.mapKeys vName $ Map.filterWithKey (\valve _ -> vFlow valve /= 0) (distancesBFS startValve adjacencyFun)
+distancesTo startValve adjacencyFun = Map.mapKeys vName $ Map.filterWithKey (\valve _ -> vFlow valve /= 0) (distancesBFS startValve adjacencyFun Nothing)
 
 -- Part 1
 

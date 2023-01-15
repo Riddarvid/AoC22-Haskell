@@ -24,22 +24,26 @@ data BFSState a = BFSState{
   lastLayer    :: Set a,
   visited      :: Map a (Pre a, Integer),-- Predecessor and layer index
   layerIndex   :: Integer,
-  adjacencyFun :: a -> [a]
+  adjacencyFun :: a -> [a],
+  pruneFun     :: Maybe (Set a -> Set a)
 }
 
-startStateSingle :: (Ord a) => a -> AdjacencyFun a -> BFSState a
+startStateSingle :: (Ord a) => a -> AdjacencyFun a -> Maybe (Set a -> Set a) -> BFSState a
 startStateSingle startNode = startStateMultiple [startNode]
 
-startStateMultiple :: (Ord a, Foldable t) => t a -> AdjacencyFun a -> BFSState a
-startStateMultiple startNodes adjacency = BFSState {lastLayer = lastLayer', visited = visited', layerIndex = 0, adjacencyFun = adjacency}
+startStateMultiple :: (Ord a, Foldable t) => t a -> AdjacencyFun a -> Maybe (Set a -> Set a) -> BFSState a
+startStateMultiple startNodes adjacency prune = BFSState {lastLayer = lastLayer', visited = visited', layerIndex = 0, adjacencyFun = adjacency, pruneFun = prune}
   where
     lastLayer' = Set.fromList $ toList startNodes
     visited' = Map.fromSet (const (End, 0)) lastLayer'
 
 stepBFS :: (Ord a) => BFSState a -> BFSState a
-stepBFS state = state{lastLayer = Map.keysSet lastLayer', visited = visited', layerIndex = layerIndex'}
+stepBFS state = state{lastLayer = prunedLastLayer, visited = visited', layerIndex = layerIndex'}
   where
     lastLayer' = nextLayer state
+    prunedLastLayer = case pruneFun state of
+      Nothing -> Map.keysSet lastLayer'
+      Just pf -> pf (Map.keysSet lastLayer')
     visited' = Map.union lastLayer' (visited state)
     layerIndex' = layerIndex state + 1
 
@@ -64,23 +68,23 @@ exploreUntil cond startState
 
 -- Distance to all
 
-distancesBFS :: (Ord a) => a -> (a -> [a]) -> Map a Integer
-distancesBFS startNode adjacency = Map.map snd (visited explored)
+distancesBFS :: (Ord a) => a -> (a -> [a]) -> Maybe (Set a -> Set a) -> Map a Integer
+distancesBFS startNode adjacency prune = Map.map snd (visited explored)
   where
-    startState = startStateSingle startNode adjacency
+    startState = startStateSingle startNode adjacency prune
     explored = exploreFully startState
 
 -- Shortest path from start(s) to goal
 
-shortestPathBFS :: (Ord a) => a -> a -> AdjacencyFun a -> Maybe (Path a)
+shortestPathBFS :: (Ord a) => a -> a -> AdjacencyFun a -> Maybe (Set a -> Set a) -> Maybe (Path a)
 shortestPathBFS start = shortestPathBFS' [start]
 
-shortestPathBFS' :: (Ord a) => [a] -> a -> AdjacencyFun a -> Maybe (Path a)
-shortestPathBFS' startNodes goal adjacency = case endState of
+shortestPathBFS' :: (Ord a) => [a] -> a -> AdjacencyFun a -> Maybe (Set a -> Set a) -> Maybe (Path a)
+shortestPathBFS' startNodes goal adjacency prune = case endState of
   Nothing    -> Nothing
   Just state -> Just $ buildPath state goal
   where
-    startState = startStateMultiple startNodes adjacency
+    startState = startStateMultiple startNodes adjacency prune
     cond state = goal `elem` lastLayer state
     endState = exploreUntil cond startState
 
@@ -96,8 +100,8 @@ nodesFromPath = foldr (\(Edge (from, to)) nodes -> Set.insert from (Set.insert t
 
 -- Find all reachable nodes
 
-reachableBFS :: (Ord a) => a -> AdjacencyFun a -> Set a
-reachableBFS start adjacency = Map.keysSet $ visited endState
+reachableBFS :: (Ord a) => a -> AdjacencyFun a -> Maybe (Set a -> Set a) -> Set a
+reachableBFS start adjacency prune = Map.keysSet $ visited endState
   where
-    startState = startStateSingle start adjacency
+    startState = startStateSingle start adjacency prune
     endState = exploreFully startState

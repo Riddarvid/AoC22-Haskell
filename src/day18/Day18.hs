@@ -79,7 +79,7 @@ minMax (x, y, z) ((minX, minY, minZ), (maxX, maxY, maxZ)) = ((minX', minY', minZ
 -- Constructing the outer layer
 
 findOuterLayer :: (Pos, Pos) -> Drop -> Set Pos
-findOuterLayer (lowPos, highPos) lava = reachableBFS startNode adjacencyFun
+findOuterLayer (lowPos, highPos) lava = reachableBFS startNode adjacencyFun Nothing
   where
     lowPos' = addPos lowPos (-1, -1, -1)
     highPos' = addPos highPos (1, 1, 1)

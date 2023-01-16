@@ -7,7 +7,7 @@ import qualified Day12    as D12
 import qualified Day13    as D13
 import qualified Day14    as D14
 import qualified Day15    as D15
-import qualified Day16    as D16
+import qualified Day16Alt as D16
 import qualified Day17    as D17
 import qualified Day18    as D18
 import qualified Day19Alt as D19
@@ -23,7 +23,7 @@ import qualified Day9     as D9
 import           Solution (Solution)
 
 day :: Int
-day = 19
+day = 16
 
 main :: IO ()
 main = do

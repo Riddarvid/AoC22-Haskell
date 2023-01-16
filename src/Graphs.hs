@@ -5,6 +5,7 @@ import           Data.Map      (Map, (!))
 import qualified Data.Map      as Map
 import           Data.Set      (Set)
 import qualified Data.Set      as Set
+import Debug.Trace (trace)
 
 data Pre a = Pre a | End
 
@@ -36,13 +37,13 @@ startStateSingle :: (Ord a) => a -> AdjacencyFun a -> BFSState a
 startStateSingle startNode = startStateMultiple [startNode]
 
 startStateMultiple :: (Ord a, Foldable t) => t a -> AdjacencyFun a -> BFSState a
-startStateMultiple startNodes adjacency = BFSState {lastLayer = lastLayer', visited = visited', layerIndex = 0, adjacencyFun = adjacency}
+startStateMultiple startNodes adjacency = BFSState {lastLayer = lastLayer', visited = visited', layerIndex = 1, adjacencyFun = adjacency}
   where
     lastLayer' = Set.fromList $ toList startNodes
     visited' = Map.fromSet (const (End, 0)) lastLayer'
 
 stepBFS :: (Ord a) => BFSOptions a -> BFSState a -> BFSState a
---stepBFS _ state | trace (show (layerIndex state) ++ " Last layer: " ++ show (Set.size (lastLayer state))) False = undefined
+stepBFS _ state | trace (show (layerIndex state) ++ " Last layer: " ++ show (Set.size (lastLayer state))) False = undefined
 stepBFS options state = state{lastLayer = Map.keysSet pruned, visited = visited', layerIndex = layerIndex'}
   where
     lastLayer' = nextLayer state

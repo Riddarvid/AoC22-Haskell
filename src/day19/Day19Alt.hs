@@ -1,14 +1,13 @@
 module Day19Alt (solve) where
-import           Data.List   (find, findIndex, maximumBy, minimumBy, sortBy)
-import           Data.Map    (Map, (!), (!?))
-import qualified Data.Map    as Map
-import           Data.Maybe  (fromJust)
-import           Data.Set    (Set)
-import qualified Data.Set    as Set
-import           Debug.Trace (trace)
-import           Graphs      (BFSOptions (BFSOptions, keepVisited, pruneFun),
-                              reachableBFS)
-import           Solution    (Solution (I))
+import           Data.List  (find, findIndex)
+import           Data.Map   (Map, (!))
+import qualified Data.Map   as Map
+import           Data.Maybe (fromJust)
+import           Data.Set   (Set)
+import qualified Data.Set   as Set
+import           Graphs     (BFSOptions (BFSOptions, keepVisited, pruneFun),
+                             reachableBFS)
+import           Solution   (Solution (I))
 
 solve :: String -> (Solution, Solution)
 solve input = (I part1, I part2)

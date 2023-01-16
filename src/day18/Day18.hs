@@ -1,7 +1,8 @@
 module Day18 (solve) where
 import           Data.Set    (Set)
 import qualified Data.Set    as Set
-import           Graphs      (reachableBFS)
+import           Graphs      (BFSOptions (BFSOptions, keepVisited, pruneFun),
+                              reachableBFS)
 import           Solution    (Solution (I, S))
 import           StringUtils (getIntegersNeg)
 
@@ -79,13 +80,14 @@ minMax (x, y, z) ((minX, minY, minZ), (maxX, maxY, maxZ)) = ((minX', minY', minZ
 -- Constructing the outer layer
 
 findOuterLayer :: (Pos, Pos) -> Drop -> Set Pos
-findOuterLayer (lowPos, highPos) lava = reachableBFS startNode adjacencyFun Nothing
+findOuterLayer (lowPos, highPos) lava = reachableBFS startNode adjacencyFun options
   where
     lowPos' = addPos lowPos (-1, -1, -1)
     highPos' = addPos highPos (1, 1, 1)
     outerDimension = (lowPos', highPos')
     startNode = lowPos'
     adjacencyFun pos = Set.toList $ Set.filter (inOuterLayer lava outerDimension) $ adjacent pos
+    options = BFSOptions{pruneFun = Nothing, keepVisited = True}
 
 inOuterLayer :: Drop -> (Pos, Pos) -> Pos -> Bool
 inOuterLayer lava dimension pos = (pos `Set.notMember` lava) && inBounds dimension pos

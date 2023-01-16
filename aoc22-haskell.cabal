@@ -49,6 +49,8 @@ library
       Day16
       Day17
       Day18
+      Day19
+      Day19Alt
   other-modules:
       Paths_aoc22_haskell
   hs-source-dirs:
@@ -71,6 +73,7 @@ library
       src/day16
       src/day17
       src/day18
+      src/day19
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       MissingH

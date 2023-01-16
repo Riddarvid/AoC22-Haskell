@@ -6,7 +6,7 @@ import qualified Data.Map    as Map
 import           Data.Maybe  (fromJust)
 import           Data.Set    (Set)
 import qualified Data.Set    as Set
-import           Graphs      (distancesBFS)
+import           Graphs      (BFSOptions (..), distancesBFS)
 import           Solution    (Solution (I))
 import           StringUtils (getIntegers)
 
@@ -58,7 +58,9 @@ generateDistances valves = Map.fromList [(vName valve, distancesTo valve adjacen
     adjacencyFun = getAdjacencyFun valves
 
 distancesTo :: Valve -> (Valve -> [Valve]) -> Map String Integer
-distancesTo startValve adjacencyFun = Map.mapKeys vName $ Map.filterWithKey (\valve _ -> vFlow valve /= 0) (distancesBFS startValve adjacencyFun Nothing)
+distancesTo startValve adjacencyFun = Map.mapKeys vName $ Map.filterWithKey (\valve _ -> vFlow valve /= 0) (distancesBFS startValve adjacencyFun options)
+  where
+    options = BFSOptions{pruneFun = Nothing, keepVisited = True}
 
 -- Part 1
 

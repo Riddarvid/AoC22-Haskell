@@ -5,8 +5,8 @@ import qualified Data.HashMap.Lazy as HM
 import           Data.Maybe        (fromJust)
 import           Data.Set          (Set)
 import qualified Data.Set          as Set
-import           Graphs            (Path, nodesFromPath, shortestPathBFS,
-                                    shortestPathBFS')
+import           Graphs            (BFSOptions (..), Path, nodesFromPath,
+                                    shortestPathBFS, shortestPathBFS')
 import           Solution          (Solution (S))
 import           StringUtils       (stringsToCharMap)
 
@@ -17,11 +17,12 @@ solve input = (S (showPath charMap path1 maxX maxY ++ "\n\n" ++ show part1), S (
     startPos = findPosition 'S' charMap
     goalPos = findPosition 'E' charMap
     adjacencyFun node = adjacencyTable charMap ! node
-    path1 = fromJust $ shortestPathBFS startPos goalPos adjacencyFun Nothing
+    path1 = fromJust $ shortestPathBFS startPos goalPos adjacencyFun options
     part1 = toInteger $ length path1
     startPos' = findPositions 'a' charMap
-    path2 = fromJust $ shortestPathBFS' startPos' goalPos adjacencyFun Nothing
+    path2 = fromJust $ shortestPathBFS' startPos' goalPos adjacencyFun options
     part2 = toInteger $ length path2
+    options = BFSOptions{pruneFun = Nothing, keepVisited = True}
 
 type Pos = (Int, Int)
 

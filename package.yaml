@@ -30,6 +30,8 @@ dependencies:
   - mtl
   - hashable
   - parsec
+  - QuickCheck
+  - deepseq
 
 ghc-options:
   - -Wall
@@ -64,6 +66,7 @@ library:
     - src/day17
     - src/day18
     - src/day19
+    - src/day20
 
 executables:
   aoc22-haskell-exe:

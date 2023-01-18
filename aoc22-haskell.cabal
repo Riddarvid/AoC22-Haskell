@@ -52,6 +52,7 @@ library
       Day18
       Day19
       Day19Alt
+      Day20
   other-modules:
       Paths_aoc22_haskell
   hs-source-dirs:
@@ -75,11 +76,14 @@ library
       src/day17
       src/day18
       src/day19
+      src/day20
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       MissingH
+    , QuickCheck
     , base >=4.7 && <5
     , containers
+    , deepseq
     , extra
     , ghc
     , hashable
@@ -98,9 +102,11 @@ executable aoc22-haskell-exe
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       MissingH
+    , QuickCheck
     , aoc22-haskell
     , base >=4.7 && <5
     , containers
+    , deepseq
     , extra
     , ghc
     , hashable
@@ -120,9 +126,11 @@ test-suite aoc22-haskell-test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       MissingH
+    , QuickCheck
     , aoc22-haskell
     , base >=4.7 && <5
     , containers
+    , deepseq
     , extra
     , ghc
     , hashable

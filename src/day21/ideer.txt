@@ -1,0 +1,4 @@
+Det finns bara en "path" som leder till humn. 
+Om vi "memoizar" resten borde arbetet bli mycket mindre och vi kan i så fall testa oss fram till det.
+Vi skulle även kunna ta fram en ekvation och lösa det direkt.
+Gillar nästan den strategin mer.

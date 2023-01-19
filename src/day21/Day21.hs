@@ -7,27 +7,30 @@ solve :: String -> (Solution, Solution)
 solve input = (I part1, I part2)
   where
     monkeyMap = parseMonkeys input
-    root = monkeyMap ! "root"
-    part1 = eval monkeyMap root
-    part2 = solvePart2 monkeyMap
+    root = parseMonkey monkeyMap $ monkeyMap ! "root"
+    part1 = solvePart1 root
+    part2 = solvePart2 root
 
 data Op = Add | Sub | Mul | Div
 
-data Expr = MNum Integer | MOp Op String String
+data MDExpr = MDNum Integer | MDOp Op String String
+data MonkeyData = MD String MDExpr
+type MonkeyMap = Map String MonkeyData
 
-data Monkey = Monkey String Expr
+data MExpr = MNum Integer | MOp Op Monkey Monkey
+data Monkey = Monkey String MExpr
 
-type MonkeyMap = Map String Monkey
+data Expr = ENum Integer | EOp Op Expr Expr
 
 -- Parsing
 
 parseMonkeys :: String -> MonkeyMap
-parseMonkeys input = Map.fromList $ map (\str -> let mnk@(Monkey name _) = parseMonkey str in (name, mnk)) $ lines input
+parseMonkeys input = Map.fromList $ map (\str -> let mnk@(MD name _) = parseMD str in (name, mnk)) $ lines input
 
-parseMonkey :: String -> Monkey
-parseMonkey monkeyStr
-  | length tokens == 2 = Monkey name (MNum n)
-  | otherwise = Monkey name (MOp op op1 op2)
+parseMD :: String -> MonkeyData
+parseMD monkeyStr
+  | length tokens == 2 = MD name (MDNum n)
+  | otherwise = MD name (MDOp op op1 op2)
   where
     tokens = words monkeyStr
     name = init $ head tokens
@@ -41,77 +44,83 @@ parseMonkey monkeyStr
       "/" -> Div
       _   -> undefined
 
--- Eval monkey
-
-eval :: MonkeyMap -> Monkey -> Integer
-eval _ (Monkey _ (MNum n)) = n
-eval monkeyMap (Monkey _ (MOp op name1 name2)) = case op of
-  Add -> val1 + val2
-  Sub -> val1 - val2
-  Mul -> val1 * val2
-  Div -> val1 `div` val2
+parseMonkey :: MonkeyMap -> MonkeyData -> Monkey
+parseMonkey _ (MD name (MDNum n)) = Monkey name $ MNum n
+parseMonkey monkeyMap (MD name (MDOp op name1 name2)) = Monkey name $ MOp op exp1 exp2
   where
-    val1 = eval monkeyMap (monkeyMap ! name1)
-    val2 = eval monkeyMap (monkeyMap ! name2)
+    monkey1 = monkeyMap ! name1
+    monkey2 = monkeyMap ! name2
+    exp1 = parseMonkey monkeyMap monkey1
+    exp2 = parseMonkey monkeyMap monkey2
 
 -- Utils
 
-pathsToMonkey :: MonkeyMap -> Monkey -> String -> [[String]]
-pathsToMonkey monkeyMap (Monkey name expr) goalName
+pathsToMonkey :: Monkey -> String -> [[String]]
+pathsToMonkey (Monkey name expr) goalName
   | name == goalName = [[name]]
   | otherwise = case expr of
     MNum _ -> []
-    MOp _ name1 name2 -> paths1 ++ paths2
+    MOp _ monkey1 monkey2 -> paths1 ++ paths2
       where
-        paths1 = map (name :) $ pathsToMonkey monkeyMap (monkeyMap ! name1) goalName
-        paths2 = map (name :) $ pathsToMonkey monkeyMap (monkeyMap ! name2) goalName
+        paths1 = map (name :) $ pathsToMonkey monkey1 goalName
+        paths2 = map (name :) $ pathsToMonkey monkey2 goalName
 
--- Part 1
+monkeyToExpr :: Monkey -> Expr
+monkeyToExpr (Monkey _ (MNum n)) = ENum n
+monkeyToExpr (Monkey _ (MOp op monkey1 monkey2)) = EOp op (monkeyToExpr monkey1) (monkeyToExpr monkey2)
 
-
--- Part 2
-
-data Expr' = ENum Integer | EOp Op Expr' Expr'
-
-eval' :: Expr' -> Integer
-eval' (ENum n) = n
-eval' (EOp op exp1 exp2) = case op of
+eval :: Expr -> Integer
+eval (ENum n) = n
+eval (EOp op exp1 exp2) = case op of
   Add -> val1 + val2
   Sub -> val1 - val2
   Mul -> val1 * val2
   Div -> val1 `div` val2
   where
-    val1 = eval' exp1
-    val2 = eval' exp2
+    val1 = eval exp1
+    val2 = eval exp2
 
-solvePart2 :: MonkeyMap -> Integer
-solvePart2 monkeyMap = eval' expr
+-- Part 1
+
+solvePart1 :: Monkey -> Integer
+solvePart1 root = eval rootExp
   where
-    root = monkeyMap ! "root"
-    path = head $ pathsToMonkey monkeyMap root "humn"
-    expr = reduceExp monkeyMap path
+    rootExp = monkeyToExpr root
 
-reduceExp :: MonkeyMap -> [String] -> Expr'
-reduceExp monkeyMap path = foldl (reduceStep monkeyMap path) (ENum 0) path
+-- Part 2
 
-reduceStep :: MonkeyMap -> [String] -> Expr' -> String -> Expr'
-reduceStep _ _ expr "humn" = expr
-reduceStep monkeyMap path expr name
-  | name == "root" = val
-  | name1 `elem` path = case op of
-    Add -> EOp Sub expr val
-    Sub -> EOp Add expr val
-    Mul -> EOp Div expr val
-    Div -> EOp Mul expr val
-  | otherwise = case op of
-    Add -> EOp Sub expr val
-    Sub -> EOp Sub val expr
-    Mul -> EOp Div expr val
-    Div -> EOp Div val expr
+solvePart2 :: Monkey -> Integer
+solvePart2 root = eval expr
   where
-    (op, name1, name2) = case monkeyMap ! name of
-      (Monkey _ (MOp op' name1' name2')) -> (op', name1', name2')
-      _                                  -> undefined
-    val = ENum $ if name1 `elem` path
-      then eval monkeyMap (monkeyMap ! name2)
-      else eval monkeyMap (monkeyMap ! name1)
+    path = head $ pathsToMonkey root "humn"
+    expr = reduceExp root path
+
+reduceExp :: Monkey -> [String] -> Expr
+reduceExp = reduce (ENum 0)
+
+reduce :: Expr -> Monkey -> [String] -> Expr
+reduce expr (Monkey "humn" _) _ = expr
+reduce expr (Monkey name expr') path
+  | name == "root" = reduce val nextMonkey path'
+  | otherwise = reduce expr'' nextMonkey path'
+  where
+    (op, monkey1@(Monkey name1 _), monkey2) = case expr' of
+      (MOp op' name1' name2') -> (op', name1', name2')
+      _                       -> undefined
+    firstInPath = name1 `elem` path
+    val = ENum $ if firstInPath
+      then eval $ monkeyToExpr monkey2
+      else eval $ monkeyToExpr monkey1
+    expr'' = if firstInPath
+      then case op of
+        Add -> EOp Sub expr val
+        Sub -> EOp Add expr val
+        Mul -> EOp Div expr val
+        Div -> EOp Mul expr val
+      else case op of
+        Add -> EOp Sub expr val
+        Sub -> EOp Sub val expr
+        Mul -> EOp Div expr val
+        Div -> EOp Div val expr
+    path' = tail path
+    nextMonkey = if firstInPath then monkey1 else monkey2

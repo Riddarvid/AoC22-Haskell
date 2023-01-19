@@ -83,17 +83,17 @@ eval (EOp op exp1 exp2) = case op of
 -- Part 1
 
 solvePart1 :: Monkey -> Integer
-solvePart1 root = eval rootExp
+solvePart1 root = eval rootExpr
   where
-    rootExp = monkeyToExpr root
+    rootExpr = monkeyToExpr root
 
 -- Part 2
 
 solvePart2 :: Monkey -> Integer
-solvePart2 root = eval expr
+solvePart2 root = eval rootExpr
   where
     path = head $ pathsToMonkey root "humn"
-    expr = reduceExp root path
+    rootExpr = reduceExp root path
 
 reduceExp :: Monkey -> [String] -> Expr
 reduceExp = reduce (ENum 0)

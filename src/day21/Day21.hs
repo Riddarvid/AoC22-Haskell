@@ -1,7 +1,7 @@
 module Day21 (solve) where
 import           Data.Map (Map, (!))
 import qualified Data.Map as Map
-import           Solution (Solution (I, S))
+import           Solution (Solution (I))
 
 solve :: String -> (Solution, Solution)
 solve input = (I part1, I part2)
@@ -95,9 +95,23 @@ reduceExp :: MonkeyMap -> [String] -> Expr'
 reduceExp monkeyMap path = foldl (reduceStep monkeyMap path) (ENum 0) path
 
 reduceStep :: MonkeyMap -> [String] -> Expr' -> String -> Expr'
-reduceStep = undefined
-
--- Cases to consider:
--- Name is root
--- Name is humn
--- All other cases
+reduceStep _ _ expr "humn" = expr
+reduceStep monkeyMap path expr name
+  | name == "root" = val
+  | name1 `elem` path = case op of
+    Add -> EOp Sub expr val
+    Sub -> EOp Add expr val
+    Mul -> EOp Div expr val
+    Div -> EOp Mul expr val
+  | otherwise = case op of
+    Add -> EOp Sub expr val
+    Sub -> EOp Sub val expr
+    Mul -> EOp Div expr val
+    Div -> EOp Div val expr
+  where
+    (op, name1, name2) = case monkeyMap ! name of
+      (Monkey _ (MOp op' name1' name2')) -> (op', name1', name2')
+      _                                  -> undefined
+    val = ENum $ if name1 `elem` path
+      then eval monkeyMap (monkeyMap ! name2)
+      else eval monkeyMap (monkeyMap ! name1)

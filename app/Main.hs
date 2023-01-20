@@ -14,6 +14,7 @@ import qualified Day19Alt as D19
 import qualified Day2     as D2
 import qualified Day20    as D20
 import qualified Day21    as D21
+import qualified Day22    as D22
 import qualified Day3     as D3
 import qualified Day4     as D4
 import qualified Day5     as D5
@@ -25,7 +26,7 @@ import qualified Day9     as D9
 import           Solution (Solution)
 
 day :: Int
-day = 21
+day = 22
 
 main :: IO ()
 main = do
@@ -35,7 +36,7 @@ main = do
 
 solvers :: [String -> (Solution, Solution)]
 solvers = [D1.solve, D2.solve, D3.solve, D4.solve, D5.solve, D6.solve, D7.solve, D8.solve, D9.solve, D10.solve, D11.solve, D12.solve,
-  D13.solve, D14.solve, D15.solve, D16.solve, D17.solve, D18.solve, D19.solve, D20.solve, D21.solve]
+  D13.solve, D14.solve, D15.solve, D16.solve, D17.solve, D18.solve, D19.solve, D20.solve, D21.solve, D22.solve]
 
 printSolution :: (Show a, Show b) => (a, b) -> IO ()
 printSolution (part1, part2) = do

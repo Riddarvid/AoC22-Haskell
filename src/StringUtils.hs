@@ -31,8 +31,8 @@ stringsToCharMap input = (HM.fromList mapList, maxX, maxY)
   where
     charList = concat input
     maxY = length input - 1
-    maxX = length (head input) - 1
-    mapList = zip [(x, y) | y <- [0 .. maxY], x <- [0 .. maxX]] charList
+    maxX = maximum (map length input) - 1
+    mapList = zip [(x, y) | y <- [0 .. maxY], x <- [0 .. (length (input !! y) - 1)]] charList
 
 type IntegerPos = (Integer, Integer)
 

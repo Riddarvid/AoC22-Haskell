@@ -69,6 +69,7 @@ library:
     - src/day20
     - src/day21
     - src/day22
+    - src/day23
 
 executables:
   aoc22-haskell-exe:

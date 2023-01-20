@@ -34,15 +34,13 @@ stringsToCharMap input = (HM.fromList mapList, maxX, maxY)
     maxX = maximum (map length input) - 1
     mapList = zip [(x, y) | y <- [0 .. maxY], x <- [0 .. (length (input !! y) - 1)]] charList
 
-type IntegerPos = (Integer, Integer)
+showGrid :: (Ord a, Enum a, Foldable t) => t (a, a) -> a -> a -> a -> a -> String
+showGrid placed minX maxX minY maxY = unlines $ map (showLayer placed minX maxX) [minY .. maxY]
 
-showGrid :: Set IntegerPos -> Integer -> Integer -> Integer -> Integer -> String
-showGrid placed minX maxX minY maxY = unlines $ map (showLayer placed minX maxX) [maxY, maxY - 1 .. minY]
-
-showLayer :: Set IntegerPos -> Integer -> Integer -> Integer -> String
+showLayer :: (Ord a, Enum a, Foldable t) => t (a, a) -> a -> a -> a -> String
 showLayer placed minX maxX layer = [showPos placed (x, layer) | x <- [minX .. maxX]]
 
-showPos :: Set IntegerPos -> IntegerPos -> Char
+showPos :: (Ord a, Foldable t) => t (a, a) -> (a, a) -> Char
 showPos placed pos
-  | Set.member pos placed = '#'
+  | pos `elem` placed = '#'
   | otherwise = '.'

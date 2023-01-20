@@ -13,3 +13,4 @@ indexOf' target ((i, x) : xs)
 
 showMap :: (Show a, Show b) => Map a b -> String
 showMap myMap = "\n" ++ unlines (map (\(a, b) -> show a ++ " -> " ++ show b) $ Map.toAscList myMap)
+

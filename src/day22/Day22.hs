@@ -4,7 +4,6 @@ import           Data.HashMap.Strict (HashMap, (!), (!?))
 import qualified Data.HashMap.Strict as HM
 import           Data.List           (elemIndex)
 import           Data.Maybe          (fromJust)
-import           Debug.Trace         (trace)
 import           Solution            (Solution (I))
 import           StringUtils         (stringsToCharMap)
 import           Text.Parsec         (Parsec, char, digit, many, many1, parse,
@@ -123,7 +122,6 @@ executeInstr wrapFun tileMap actor instr = case instr of
       (pos, facing) = move wrapFun tileMap (aFacing actor) (aPos actor) n
 
 move :: WrapFun -> TileMap -> Facing -> Pos -> Integer -> (Pos, Facing)
---move _ _ _ pos _ | trace (show pos) False = undefined
 move _ _ facing pos 0 = (pos, facing)
 move wrapFun tileMap facing pos n = case tileMap ! nextPos' of
   Space -> move wrapFun tileMap facing' nextPos' (n - 1)
@@ -180,20 +178,20 @@ wrapCube pos facing = case facing of
     leftMap = sideMap d' d True FRight ++ sideMap b' b False FDown ++ sideMap d d' True FRight ++ sideMap e' e False FDown
     upMap = sideMap b b' False FRight ++ sideMap e e' False FRight ++ sideMap g' g False FUp
 
-    a = [(x, 150) | x <- [51 .. 100]]
-    a' = [(50, y) | y <- [151 .. 200]]
-    b = [(x, 101) | x <- [1 .. 50]]
-    b' = [(51, y) | y <- [51 .. 100]]
-    c = [(100, y) | y <- [51 .. 100]]
-    c' = [(x, 50) | x <- [101 .. 150]]
-    d = [(1, y) | y <- [101 .. 150]]
-    d' = [(51, y) | y <- [1 .. 50]]
-    e = [(x, 1) | x <- [51 .. 100]]
-    e' = [(1, y) | y <- [151 .. 200]]
-    f = [(100, y) | y <- [101 .. 150]]
+    a  = [(x, 150) | x <- [51 .. 100]]
+    a' = [(50, y)  | y <- [151 .. 200]]
+    b  = [(x, 101) | x <- [1 .. 50]]
+    b' = [(51, y)  | y <- [51 .. 100]]
+    c  = [(100, y) | y <- [51 .. 100]]
+    c' = [(x, 50)  | x <- [101 .. 150]]
+    d  = [(1, y)   | y <- [101 .. 150]]
+    d' = [(51, y)  | y <- [1 .. 50]]
+    e  = [(x, 1)   | x <- [51 .. 100]]
+    e' = [(1, y)   | y <- [151 .. 200]]
+    f  = [(100, y) | y <- [101 .. 150]]
     f' = [(150, y) | y <- [1 .. 50]]
-    g = [(x, 200) | x <- [1 .. 50]]
-    g' = [(x, 1) | x <- [101 .. 150]]
+    g  = [(x, 200) | x <- [1 .. 50]]
+    g' = [(x, 1)   | x <- [101 .. 150]]
 
 sideMap :: [Pos] -> [Pos] -> Bool -> Facing -> [(Pos, (Pos, Facing))]
 sideMap side1 side2 shouldReverse facing = zip side1 (addFacing side2' facing)

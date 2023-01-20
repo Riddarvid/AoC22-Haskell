@@ -1,16 +1,12 @@
 module Day23 (solve) where
 import           Control.DeepSeq     (($!!))
-import           Data.Bifunctor      (bimap)
 import           Data.HashMap.Strict (HashMap, (!))
 import qualified Data.HashMap.Strict as HM
 import           Data.HashSet        (HashSet)
 import qualified Data.HashSet        as HS
-import           Data.List           (find, nub)
-import           Data.List.Utils     (countElem)
-import           Debug.Trace         (trace)
+import           Data.List           (find)
 import           Solution            (Solution (I))
-import           StringUtils         (showGrid, stringsToCharMap)
-import           Utils               (showMap)
+import           StringUtils         (stringsToCharMap)
 
 solve :: String -> (Solution, Solution)
 solve input = (I part1, I part2)

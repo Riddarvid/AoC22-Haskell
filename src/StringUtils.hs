@@ -2,8 +2,6 @@ module StringUtils (getInts, getIntegers, getIntsNeg, getIntegersNeg, stringsToC
 
 import           Data.HashMap.Lazy (HashMap)
 import qualified Data.HashMap.Lazy as HM
-import           Data.Set          (Set)
-import qualified Data.Set          as Set
 import           Text.Regex.PCRE   (AllTextMatches (getAllTextMatches), (=~))
 
 intRegex :: String

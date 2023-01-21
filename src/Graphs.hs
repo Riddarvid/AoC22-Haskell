@@ -1,11 +1,10 @@
 {-# LANGUAGE InstanceSigs #-}
-module Graphs (shortestPathBFS, shortestPathBFS', nodesFromPath, distancesBFS, reachableBFS, Edge, Path, BFSOptions (BFSOptions, pruneFun, keepVisited)) where
+module Graphs (shortestPathBFS, shortestPathBFS', shortestDistanceBFSCond, nodesFromPath, distancesBFS, reachableBFS, Edge, Path, BFSOptions (BFSOptions, pruneFun, keepVisited)) where
 import           Data.Foldable (toList)
 import           Data.Map      (Map, (!))
 import qualified Data.Map      as Map
 import           Data.Set      (Set)
 import qualified Data.Set      as Set
-import Debug.Trace (trace)
 
 data Pre a = Pre a | End
 
@@ -43,7 +42,7 @@ startStateMultiple startNodes adjacency = BFSState {lastLayer = lastLayer', visi
     visited' = Map.fromSet (const (End, 0)) lastLayer'
 
 stepBFS :: (Ord a) => BFSOptions a -> BFSState a -> BFSState a
-stepBFS _ state | trace (show (layerIndex state) ++ " Last layer: " ++ show (Set.size (lastLayer state))) False = undefined
+--stepBFS _ state | trace (show (layerIndex state) ++ " Last layer: " ++ show (Set.size (lastLayer state))) False = undefined
 stepBFS options state = state{lastLayer = Map.keysSet pruned, visited = visited', layerIndex = layerIndex'}
   where
     lastLayer' = nextLayer state
@@ -101,6 +100,15 @@ shortestPathBFS' startNodes goal adjacency options = case endState of
     startState = startStateMultiple startNodes adjacency
     cond state = goal `elem` lastLayer state
     endState = exploreUntil options cond startState
+
+shortestDistanceBFSCond :: Ord a => a -> (a -> Bool) -> AdjacencyFun a -> BFSOptions a -> Maybe Integer
+shortestDistanceBFSCond start endCond adjacency options = case endState of
+  Nothing    -> Nothing
+  Just state -> Just $ layerIndex state - 1
+  where
+    startState = startStateSingle start adjacency
+    endState = exploreUntil options endCond' startState
+    endCond' state = any endCond $ lastLayer state
 
 -- Path building
 

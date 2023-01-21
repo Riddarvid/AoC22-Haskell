@@ -1,0 +1,5 @@
+Borde egentligen använda hashmap men kommer nog köra Map för att kunna använda mitt grafbibliotek.
+
+On a turn you can take one of five options: Walk in any of the four directions or stay still. No matter what you do, time still passes.
+
+Ide: Våra noder i grafen utgörs av position och ett tidsindex. Tidsindexet är modulo lcm(längd, bredd).
